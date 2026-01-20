@@ -1,0 +1,36 @@
+# Xcode
+#
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserdatad
+*.xccheckout
+*.xcscheme
+*.xsctwrite
+*.xcuserstate
+xcuserdata/
+
+# Swift Package Manager
+#
+.build/
+.swiftpm/
+
+# Firebase
+#
+.firebase/
+functions/lib/
+functions/node_modules/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# macOS
+#
+.DS_Store
+
+# Temporary files
+#
+*~
+*.swp
+*.lock

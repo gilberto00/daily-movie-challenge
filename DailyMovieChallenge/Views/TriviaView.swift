@@ -92,7 +92,7 @@ struct TriviaView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navigateToResult) {
             if let result = result {
-                ResultView(result: result)
+                ResultView(result: result, challengeId: challenge.id)
             }
         }
     }

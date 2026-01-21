@@ -60,4 +60,56 @@ class FirestoreService {
         
         return streak
     }
+
+    func fetchComments(challengeId: String) async throws -> [Comment] {
+        let snapshot = try await db.collection("comments")
+            .whereField("challengeId", isEqualTo: challengeId)
+            .order(by: "createdAt", descending: true)
+            .getDocuments()
+
+        return snapshot.documents.compactMap { document in
+            let data = document.data()
+            guard
+                let userId = data["userId"] as? String,
+                let text = data["text"] as? String
+            else {
+                return nil
+            }
+
+            let timestamp = data["createdAt"] as? Timestamp
+            let createdAt = timestamp?.dateValue() ?? Date()
+
+            return Comment(
+                id: document.documentID,
+                challengeId: challengeId,
+                userId: userId,
+                text: text,
+                createdAt: createdAt
+            )
+        }
+    }
+
+    func addComment(challengeId: String, userId: String, text: String) async throws -> Comment {
+        let docRef = db.collection("comments").document()
+        let data: [String: Any] = [
+            "challengeId": challengeId,
+            "userId": userId,
+            "text": text,
+            "createdAt": FieldValue.serverTimestamp()
+        ]
+
+        try await docRef.setData(data)
+        let saved = try await docRef.getDocument()
+        let savedData = saved.data()
+        let timestamp = savedData?["createdAt"] as? Timestamp
+        let createdAt = timestamp?.dateValue() ?? Date()
+
+        return Comment(
+            id: docRef.documentID,
+            challengeId: challengeId,
+            userId: userId,
+            text: text,
+            createdAt: createdAt
+        )
+    }
 }

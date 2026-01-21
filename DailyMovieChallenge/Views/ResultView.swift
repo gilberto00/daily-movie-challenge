@@ -9,7 +9,9 @@ import SwiftUI
 
 struct ResultView: View {
     let result: ChallengeResult
+    let challengeId: String
     @Environment(\.dismiss) var dismiss
+    @State private var showCommentsSheet = false
     
     var body: some View {
         ScrollView {
@@ -56,7 +58,7 @@ struct ResultView: View {
                 
                 // View Comments Button (Placeholder)
                 Button {
-                    // Placeholder - implementar depois
+                    showCommentsSheet = true
                 } label: {
                     Text("View Comments")
                         .font(.headline)
@@ -84,15 +86,27 @@ struct ResultView: View {
         }
         .navigationTitle("Result")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showCommentsSheet) {
+            NavigationStack {
+                CommentsView(challengeId: challengeId) {
+                    showCommentsSheet = false
+                    dismiss()
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
     }
 }
 
 #Preview {
     NavigationStack {
-        ResultView(result: ChallengeResult(
-            isCorrect: true,
-            correctAnswer: "2010",
-            curiosity: "The rotating hallway scene was filmed using a real rotating set."
-        ))
+        ResultView(
+            result: ChallengeResult(
+                isCorrect: true,
+                correctAnswer: "2010",
+                curiosity: "The rotating hallway scene was filmed using a real rotating set."
+            ),
+            challengeId: "2026-01-19"
+        )
     }
 }

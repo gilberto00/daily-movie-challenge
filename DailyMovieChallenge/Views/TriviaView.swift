@@ -9,10 +9,12 @@ import SwiftUI
 
 struct TriviaView: View {
     let challenge: DailyChallenge
+    let onBackToHome: () -> Void
     @EnvironmentObject var challengeViewModel: DailyChallengeViewModel
     @StateObject private var gameViewModel = TriviaGameViewModel()
     @State private var navigateToResult = false
     @State private var result: ChallengeResult?
+    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         ScrollView {
@@ -92,7 +94,17 @@ struct TriviaView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navigateToResult) {
             if let result = result {
-                ResultView(result: result, challengeId: challenge.id)
+                ResultView(result: result, challengeId: challenge.id) {
+                    // Callback para voltar para Home
+                    print("🔄 [TriviaView] Back to Home callback chamado do ResultView")
+                    // Resetar o estado de navegação do ResultView
+                    navigateToResult = false
+                    // Aguardar um pouco antes de chamar o callback do HomeView
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        print("🔄 [TriviaView] Chamando onBackToHome() para voltar para Home")
+                        onBackToHome()
+                    }
+                }
             }
         }
     }
@@ -100,16 +112,19 @@ struct TriviaView: View {
 
 #Preview {
     NavigationStack {
-        TriviaView(challenge: DailyChallenge(
-            id: "2026-01-19",
-            movieId: 27205,
-            title: "Inception",
-            posterUrl: nil,
-            question: "In which year was this movie released?",
-            options: ["2008", "2010", "2012", "2014"],
-            correctAnswer: "2010",
-            curiosity: "The rotating hallway scene was filmed using a real rotating set."
-        ))
+        TriviaView(
+            challenge: DailyChallenge(
+                id: "2026-01-19",
+                movieId: 27205,
+                title: "Inception",
+                posterUrl: nil,
+                question: "In which year was this movie released?",
+                options: ["2008", "2010", "2012", "2014"],
+                correctAnswer: "2010",
+                curiosity: "The rotating hallway scene was filmed using a real rotating set."
+            ),
+            onBackToHome: {}
+        )
         .environmentObject(DailyChallengeViewModel())
     }
 }

@@ -107,8 +107,15 @@ struct HomeView: View {
         }
         .navigationDestination(isPresented: $navigateToTrivia) {
             if let challenge = challengeViewModel.challenge {
-                TriviaView(challenge: challenge)
-                    .environmentObject(challengeViewModel)
+                TriviaView(
+                    challenge: challenge,
+                    onBackToHome: {
+                        // Resetar navegação para voltar à Home
+                        print("🔄 [HomeView] Voltando para Home - resetando navigateToTrivia")
+                        navigateToTrivia = false
+                    }
+                )
+                .environmentObject(challengeViewModel)
             }
         }
     }

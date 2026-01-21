@@ -71,7 +71,8 @@ struct CommentsView: View {
             .padding(.bottom, 12)
 
             Button {
-                dismiss()
+                print("🔄 [CommentsView] Back to Home button pressionado")
+                // Chamar o callback que fecha o sheet e volta para Home
                 onBackToHome()
             } label: {
                 Text("Back to Home")

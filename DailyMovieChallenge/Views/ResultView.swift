@@ -10,8 +10,10 @@ import SwiftUI
 struct ResultView: View {
     let result: ChallengeResult
     let challengeId: String
+    let onBackToHome: () -> Void
     @Environment(\.dismiss) var dismiss
     @State private var showCommentsSheet = false
+    @State private var shouldReturnToHome = false
     
     var body: some View {
         ScrollView {
@@ -71,7 +73,8 @@ struct ResultView: View {
                 
                 // Back to Home Button
                 Button {
-                    dismiss()
+                    print("🔄 [ResultView] Back to Home button pressionado")
+                    onBackToHome()
                 } label: {
                     Text("Back to Home")
                         .font(.headline)
@@ -89,11 +92,23 @@ struct ResultView: View {
         .sheet(isPresented: $showCommentsSheet) {
             NavigationStack {
                 CommentsView(challengeId: challengeId) {
+                    // Marcar que deve voltar para Home
+                    shouldReturnToHome = true
+                    // Fechar o sheet
                     showCommentsSheet = false
-                    dismiss()
                 }
             }
             .presentationDetents([.medium, .large])
+        }
+        .onChange(of: showCommentsSheet) { isPresented in
+            // Quando o sheet fechar, se deveria voltar para Home, chama o callback
+            if !isPresented && shouldReturnToHome {
+                shouldReturnToHome = false
+                // Pequeno delay para garantir que a animação do sheet terminou
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    onBackToHome()
+                }
+            }
         }
     }
 }
@@ -106,7 +121,8 @@ struct ResultView: View {
                 correctAnswer: "2010",
                 curiosity: "The rotating hallway scene was filmed using a real rotating set."
             ),
-            challengeId: "2026-01-19"
+            challengeId: "2026-01-19",
+            onBackToHome: {}
         )
     }
 }

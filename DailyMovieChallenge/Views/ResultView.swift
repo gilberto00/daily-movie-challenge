@@ -10,25 +10,39 @@ import SwiftUI
 struct ResultView: View {
     let result: ChallengeResult
     let challengeId: String
+    let movieId: Int
     let onBackToHome: () -> Void
+    @EnvironmentObject var challengeViewModel: DailyChallengeViewModel
     @Environment(\.dismiss) var dismiss
     @State private var showCommentsSheet = false
     @State private var shouldReturnToHome = false
+    @State private var commentsCount: Int = 0
+    @State private var isLoadingCommentsCount = false
+    @State private var showResult = false
+    @State private var isLoadingExtra = false
+    @State private var playedQuestionTypes: [String] = []
+    @State private var navigateToExtraQuestion = false
     
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // Result Icon
+                // Result Icon com animação
                 Image(systemName: result.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .resizable()
                     .frame(width: 80, height: 80)
                     .foregroundColor(result.isCorrect ? .green : .red)
+                    .scaleEffect(showResult ? 1.0 : 0.5)
+                    .opacity(showResult ? 1.0 : 0.0)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.7), value: showResult)
                 
-                // Result Message
+                // Result Message com animação
                 Text(result.isCorrect ? "Correct!" : "Wrong!")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(result.isCorrect ? .green : .red)
+                    .opacity(showResult ? 1.0 : 0.0)
+                    .offset(y: showResult ? 0 : -20)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1), value: showResult)
                 
                 // Correct Answer (if wrong)
                 if !result.isCorrect {
@@ -58,18 +72,153 @@ struct ResultView: View {
                 .background(Color.blue.opacity(0.1))
                 .cornerRadius(12)
                 
-                // View Comments Button (Placeholder)
+                // View Comments Button com contador
                 Button {
                     showCommentsSheet = true
                 } label: {
-                    Text("View Comments")
-                        .font(.headline)
-                        .foregroundColor(.blue)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(12)
+                    HStack {
+                        Text("View Comments")
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                        
+                        Spacer()
+                        
+                        if isLoadingCommentsCount {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                        } else if commentsCount > 0 {
+                            Text("\(commentsCount)")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.blue)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(12)
                 }
+                
+                // More Questions (Same Movie) Button
+                Button {
+                    Task {
+                        isLoadingExtra = true
+                        await challengeViewModel.loadExtraQuestion(movieId: movieId, excludeTypes: playedQuestionTypes)
+                        isLoadingExtra = false
+                        if let challenge = challengeViewModel.challenge {
+                            // Adicionar tipo de pergunta jogada
+                            if let questionType = challenge.questionType {
+                                playedQuestionTypes.append(questionType)
+                            }
+                            // Navegar direto para nova pergunta do mesmo filme
+                            navigateToExtraQuestion = true
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "questionmark.circle.fill")
+                        Text("More Questions (Same Movie)")
+                            .font(.headline)
+                        Spacer()
+                        if isLoadingExtra {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.green)
+                    .cornerRadius(12)
+                }
+                .disabled(isLoadingExtra)
+                
+                // New Movie Challenge Button
+                Button {
+                    Task {
+                        isLoadingExtra = true
+                        print("🔄 [ResultView] Loading new movie challenge...")
+                        await challengeViewModel.loadNewMovieChallenge()
+                        
+                        // Verificar se o desafio foi carregado
+                        if let newChallenge = challengeViewModel.challenge {
+                            print("✅ [ResultView] New challenge loaded: \(newChallenge.title) (ID: \(newChallenge.id))")
+                            
+                            // Resetar tipos jogados para novo filme
+                            playedQuestionTypes = []
+                            
+                            // AGUARDAR que o ViewModel termine completamente
+                            // O loadNewMovieChallenge já deve ter setado isLoading = false
+                            // Mas vamos garantir esperando um pouco mais
+                            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 segundos
+                            
+                            // Garantir que isLoading está false antes de voltar
+                            await MainActor.run {
+                                // Verificar estado atual
+                                print("🔄 [ResultView] Verificando estado antes de voltar para Home")
+                                print("🔄 [ResultView] isLoading ANTES: \(challengeViewModel.isLoading)")
+                                print("🔄 [ResultView] challenge existe: \(challengeViewModel.challenge != nil)")
+                                print("🔄 [ResultView] challenge title: \(challengeViewModel.challenge?.title ?? "nil")")
+                                
+                                // FORÇAR isLoading = false explicitamente
+                                challengeViewModel.isLoading = false
+                                isLoadingExtra = false
+                                
+                                print("🔄 [ResultView] Set isLoading = false explicitamente")
+                                print("🔄 [ResultView] isLoading DEPOIS: \(challengeViewModel.isLoading)")
+                                
+                                // Verificar novamente após um delay
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    print("🔄 [ResultView] ⚠️ VERIFICAÇÃO FINAL antes de voltar para Home")
+                                    print("🔄 [ResultView] isLoading FINAL: \(challengeViewModel.isLoading)")
+                                    print("🔄 [ResultView] challenge existe: \(challengeViewModel.challenge != nil)")
+                                    
+                                    // Se ainda estiver loading, forçar novamente
+                                    if challengeViewModel.isLoading {
+                                        print("⚠️⚠️⚠️ [ResultView] CRÍTICO: isLoading ainda está true! Forçando false novamente...")
+                                        challengeViewModel.isLoading = false
+                                    }
+                                    
+                                    // Voltar para Home APENAS se isLoading estiver false
+                                    if !challengeViewModel.isLoading {
+                                        print("✅ [ResultView] Returning to Home with new challenge")
+                                        onBackToHome()
+                                    } else {
+                                        print("❌ [ResultView] ERRO: Não posso voltar para Home - isLoading ainda está true!")
+                                    }
+                                }
+                            }
+                        } else {
+                            print("❌ [ResultView] Failed to load new challenge")
+                            await MainActor.run {
+                                challengeViewModel.isLoading = false
+                                isLoadingExtra = false
+                            }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "film.fill")
+                        Text("New Movie Challenge")
+                            .font(.headline)
+                        Spacer()
+                        if isLoadingExtra {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.purple)
+                    .cornerRadius(12)
+                }
+                .disabled(isLoadingExtra)
                 
                 // Back to Home Button
                 Button {
@@ -89,6 +238,14 @@ struct ResultView: View {
         }
         .navigationTitle("Result")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            // Animar resultado ao aparecer
+            withAnimation {
+                showResult = true
+            }
+            // Carregar contagem de comentários ao aparecer
+            await loadCommentsCount()
+        }
         .sheet(isPresented: $showCommentsSheet) {
             NavigationStack {
                 CommentsView(challengeId: challengeId) {
@@ -99,8 +256,14 @@ struct ResultView: View {
                 }
             }
             .presentationDetents([.medium, .large])
+            .onDisappear {
+                // Recarregar contagem quando o sheet fechar
+                Task {
+                    await loadCommentsCount()
+                }
+            }
         }
-        .onChange(of: showCommentsSheet) { isPresented in
+        .onChange(of: showCommentsSheet) { oldValue, isPresented in
             // Quando o sheet fechar, se deveria voltar para Home, chama o callback
             if !isPresented && shouldReturnToHome {
                 shouldReturnToHome = false
@@ -110,6 +273,30 @@ struct ResultView: View {
                 }
             }
         }
+        .animation(.default, value: commentsCount)
+        .navigationDestination(isPresented: $navigateToExtraQuestion) {
+            if let challenge = challengeViewModel.challenge {
+                TriviaView(
+                    challenge: challenge,
+                    onBackToHome: {
+                        // Fechar ResultView e voltar para Home
+                        onBackToHome()
+                    }
+                )
+                .environmentObject(challengeViewModel)
+            }
+        }
+    }
+    
+    private func loadCommentsCount() async {
+        isLoadingCommentsCount = true
+        do {
+            commentsCount = try await FirestoreService.shared.getCommentsCount(challengeId: challengeId)
+        } catch {
+            print("⚠️ [ResultView] Error loading comments count: \(error.localizedDescription)")
+            commentsCount = 0
+        }
+        isLoadingCommentsCount = false
     }
 }
 
@@ -122,7 +309,9 @@ struct ResultView: View {
                 curiosity: "The rotating hallway scene was filmed using a real rotating set."
             ),
             challengeId: "2026-01-19",
+            movieId: 27205,
             onBackToHome: {}
         )
+        .environmentObject(DailyChallengeViewModel())
     }
 }

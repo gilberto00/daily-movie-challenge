@@ -11,7 +11,6 @@ struct CommentsView: View {
     let challengeId: String
     let onBackToHome: () -> Void
     @StateObject private var viewModel = CommentsViewModel()
-    @State private var isSubmitting = false
     @State private var showError = false
     @Environment(\.dismiss) private var dismiss
 
@@ -30,7 +29,7 @@ struct CommentsView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(comment.text)
                             .font(.body)
-                        Text(Self.dateFormatter.string(from: comment.createdAt))
+                        Text(comment.createdAt.relativeString())
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -47,25 +46,35 @@ struct CommentsView: View {
                     .lineLimit(1...3)
 
                 Button {
-                    guard !isSubmitting else { return }
-                    isSubmitting = true
                     Task {
                         await viewModel.submitComment(challengeId: challengeId)
-                        isSubmitting = false
                         if viewModel.error != nil {
                             showError = true
                         }
                     }
                 } label: {
-                    Text("Send")
-                        .font(.headline)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(viewModel.newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.3) : Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                    if viewModel.isSubmitting {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                    } else {
+                        Text("Send")
+                            .font(.headline)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                    }
                 }
-                .disabled(viewModel.newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
+                .frame(width: 80, height: 36)
+                .background(
+                    viewModel.newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isSubmitting
+                        ? Color.gray.opacity(0.3)
+                        : Color.blue
+                )
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .disabled(viewModel.newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isSubmitting)
             }
             .padding(.horizontal)
             .padding(.bottom, 12)
@@ -101,12 +110,6 @@ struct CommentsView: View {
         })
     }
 
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter
-    }()
 }
 
 #Preview {

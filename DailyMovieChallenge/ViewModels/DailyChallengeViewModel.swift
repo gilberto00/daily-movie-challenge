@@ -86,4 +86,49 @@ class DailyChallengeViewModel: ObservableObject {
             curiosity: challenge.curiosity
         )
     }
+    
+    func loadExtraQuestion(movieId: Int, excludeTypes: [String]) async {
+        isLoading = true
+        error = nil
+        
+        do {
+            challenge = try await challengeService.fetchExtraQuestion(movieId: movieId, excludeTypes: excludeTypes)
+        } catch {
+            self.error = error
+        }
+        
+        isLoading = false
+    }
+    
+    func loadNewMovieChallenge() async {
+        print("🔄 [DailyChallengeViewModel] loadNewMovieChallenge() called")
+        print("🔄 [DailyChallengeViewModel] Current state - isLoading: \(isLoading), challenge: \(challenge != nil ? challenge!.title : "nil")")
+        
+        await MainActor.run {
+            isLoading = true
+            error = nil
+            print("🔄 [DailyChallengeViewModel] Set isLoading = true")
+        }
+        
+        do {
+            let newChallenge = try await challengeService.fetchNewMovieChallenge()
+            
+            await MainActor.run {
+                challenge = newChallenge
+                isLoading = false
+                print("✅ [DailyChallengeViewModel] New challenge loaded: \(newChallenge.title) (ID: \(newChallenge.id), MovieID: \(newChallenge.movieId))")
+                print("✅ [DailyChallengeViewModel] Set isLoading = false")
+                print("✅ [DailyChallengeViewModel] Current state - isLoading: \(isLoading), challenge: \(challenge != nil ? challenge!.title : "nil")")
+            }
+        } catch {
+            print("❌ [DailyChallengeViewModel] Error loading new challenge: \(error.localizedDescription)")
+            await MainActor.run {
+                self.error = error
+                isLoading = false
+                print("❌ [DailyChallengeViewModel] Set isLoading = false (error state)")
+            }
+        }
+        
+        print("✅ [DailyChallengeViewModel] loadNewMovieChallenge() completed")
+    }
 }

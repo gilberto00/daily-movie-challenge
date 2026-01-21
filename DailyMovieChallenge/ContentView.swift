@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var challengeViewModel = DailyChallengeViewModel()
+    @State private var hasLoadedInitialChallenge = false
     
     var body: some View {
         NavigationStack {
@@ -22,8 +23,12 @@ struct ContentView: View {
                 HomeView()
                     .environmentObject(challengeViewModel)
                     .task {
-                        print("🔄 [ContentView] Task started - loading challenge")
-                        await challengeViewModel.loadDailyChallenge()
+                        // Carregar desafio apenas na primeira vez
+                        if !hasLoadedInitialChallenge {
+                            print("🔄 [ContentView] Task started - loading initial challenge")
+                            await challengeViewModel.loadDailyChallenge()
+                            hasLoadedInitialChallenge = true
+                        }
                     }
             } else {
                 VStack(spacing: 12) {

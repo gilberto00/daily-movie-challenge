@@ -12,6 +12,10 @@ export interface TMDBMovie {
   overview: string;
   vote_average: number;
   popularity: number;
+  director?: string;
+  genres?: Array<{ id: number; name: string }>;
+  runtime?: number;
+  tagline?: string;
 }
 
 export interface TMDBPopularMoviesResponse {
@@ -49,6 +53,45 @@ export async function fetchPopularMovie(): Promise<TMDBMovie> {
   } catch (error) {
     console.error('Error fetching popular movie from TMDB:', error);
     throw error;
+  }
+}
+
+/**
+ * Busca detalhes completos de um filme pelo ID
+ */
+export async function fetchMovieDetails(movieId: number): Promise<TMDBMovie | null> {
+  try {
+    const response = await axios.get(
+      `${TMDB_BASE_URL}/movie/${movieId}`,
+      {
+        params: {
+          api_key: TMDB_API_KEY,
+          language: 'en-US',
+        },
+      }
+    );
+
+    // Buscar informações de créditos para obter o diretor
+    const creditsResponse = await axios.get(
+      `${TMDB_BASE_URL}/movie/${movieId}/credits`,
+      {
+        params: {
+          api_key: TMDB_API_KEY,
+        },
+      }
+    );
+
+    const director = creditsResponse.data.crew?.find(
+      (person: any) => person.job === 'Director'
+    )?.name || 'Unknown';
+
+    return {
+      ...response.data,
+      director: director,
+    };
+  } catch (error) {
+    console.error(`Error fetching movie details for ID ${movieId}:`, error);
+    return null;
   }
 }
 

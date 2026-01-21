@@ -112,4 +112,13 @@ class FirestoreService {
             createdAt: createdAt
         )
     }
+    
+    func getCommentsCount(challengeId: String) async throws -> Int {
+        let snapshot = try await db.collection("comments")
+            .whereField("challengeId", isEqualTo: challengeId)
+            .count
+            .getAggregation(source: .server)
+        
+        return Int(truncating: snapshot.count)
+    }
 }

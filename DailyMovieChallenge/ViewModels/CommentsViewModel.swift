@@ -15,6 +15,7 @@ class CommentsViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var error: Error?
     @Published var newCommentText: String = ""
+    @Published var isSubmitting: Bool = false
 
     private let firestoreService = FirestoreService.shared
     
@@ -50,6 +51,9 @@ class CommentsViewModel: ObservableObject {
             return
         }
 
+        isSubmitting = true
+        error = nil
+        
         do {
             let created = try await firestoreService.addComment(
                 challengeId: challengeId,
@@ -61,5 +65,7 @@ class CommentsViewModel: ObservableObject {
         } catch {
             self.error = error
         }
+        
+        isSubmitting = false
     }
 }

@@ -78,6 +78,53 @@ class ChallengeService {
             throw ChallengeError.networkError
         }
     }
+    
+    func fetchExtraQuestion(movieId: Int, excludeTypes: [String] = []) async throws -> DailyChallenge {
+        let excludeTypesString = excludeTypes.joined(separator: ",")
+        let urlString = "\(baseURL)/getExtraQuestion?movieId=\(movieId)&excludeTypes=\(excludeTypesString)"
+        
+        guard let url = URL(string: urlString) else {
+            throw ChallengeError.networkError
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 30.0
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw ChallengeError.networkError
+        }
+        
+        let decoder = JSONDecoder()
+        return try decoder.decode(DailyChallenge.self, from: data)
+    }
+    
+    func fetchNewMovieChallenge() async throws -> DailyChallenge {
+        let urlString = "\(baseURL)/getNewMovieChallenge"
+        
+        guard let url = URL(string: urlString) else {
+            throw ChallengeError.networkError
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 30.0
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw ChallengeError.networkError
+        }
+        
+        let decoder = JSONDecoder()
+        return try decoder.decode(DailyChallenge.self, from: data)
+    }
 }
 
 enum ChallengeError: LocalizedError {

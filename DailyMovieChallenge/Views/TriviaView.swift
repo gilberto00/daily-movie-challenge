@@ -19,12 +19,41 @@ struct TriviaView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // Movie Header with Poster
+                VStack(spacing: 12) {
+                    // Movie Poster (smaller version)
+                    if let posterUrl = challenge.posterUrl, let url = URL(string: posterUrl) {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        } placeholder: {
+                            ProgressView()
+                                .frame(width: 120, height: 180)
+                        }
+                        .frame(width: 120, height: 180)
+                        .cornerRadius(12)
+                        .shadow(radius: 6)
+                    }
+                    
+                    // Movie Title
+                    Text(challenge.title)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 8)
+                
+                Divider()
+                    .padding(.vertical, 8)
+                
                 // Question
                 Text(challenge.question)
                     .font(.title2)
                     .fontWeight(.semibold)
                     .multilineTextAlignment(.center)
-                    .padding()
+                    .padding(.horizontal)
                 
                 // Answer Options
                 VStack(spacing: 16) {
@@ -92,9 +121,34 @@ struct TriviaView: View {
         }
         .navigationTitle("Challenge")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 8) {
+                    if let posterUrl = challenge.posterUrl, let url = URL(string: posterUrl) {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.3))
+                        }
+                        .frame(width: 30, height: 45)
+                        .cornerRadius(6)
+                        .clipped()
+                    }
+                    Text("Challenge")
+                        .font(.headline)
+                }
+            }
+        }
         .navigationDestination(isPresented: $navigateToResult) {
             if let result = result {
-                ResultView(result: result, challengeId: challenge.id) {
+                ResultView(
+                    result: result,
+                    challengeId: challenge.id,
+                    movieId: challenge.movieId
+                ) {
                     // Callback para voltar para Home
                     print("🔄 [TriviaView] Back to Home callback chamado do ResultView")
                     // Resetar o estado de navegação do ResultView
@@ -105,6 +159,7 @@ struct TriviaView: View {
                         onBackToHome()
                     }
                 }
+                .environmentObject(challengeViewModel)
             }
         }
     }
@@ -121,7 +176,9 @@ struct TriviaView: View {
                 question: "In which year was this movie released?",
                 options: ["2008", "2010", "2012", "2014"],
                 correctAnswer: "2010",
-                curiosity: "The rotating hallway scene was filmed using a real rotating set."
+                curiosity: "The rotating hallway scene was filmed using a real rotating set.",
+                questionType: "year",
+                isExtra: false
             ),
             onBackToHome: {}
         )

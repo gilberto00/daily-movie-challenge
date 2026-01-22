@@ -11,16 +11,17 @@ struct ContentView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var challengeViewModel = DailyChallengeViewModel()
     @State private var hasLoadedInitialChallenge = false
+    @State private var navigationPath = NavigationPath()
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             if authViewModel.isLoading {
                 ProgressView("Authenticating...")
                     .onAppear {
                         print("🔄 [ContentView] Showing authentication loading")
                     }
             } else if authViewModel.isAuthenticated {
-                HomeView()
+                HomeView(navigationPath: $navigationPath)
                     .environmentObject(challengeViewModel)
                     .task {
                         // Carregar desafio apenas na primeira vez

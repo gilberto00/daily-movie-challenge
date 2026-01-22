@@ -10,15 +10,29 @@
 		E5AFECA72F1F1E9700DFA4B7 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = E5AFECA62F1F1E9700DFA4B7 /* FirebaseAuth */; };
 		E5AFECA92F1F1E9700DFA4B7 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = E5AFECA82F1F1E9700DFA4B7 /* FirebaseCore */; };
 		E5AFECAB2F1F1E9700DFA4B7 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = E5AFECAA2F1F1E9700DFA4B7 /* FirebaseFirestore */; };
+		E5AFECAD2F1F1E9700DFA4B8 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = E5AFECAC2F1F1E9700DFA4B8 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		E55052692F1F1BBB00DE9B03 /* DailyMovieChallenge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DailyMovieChallenge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E5AFEDBC2F21B93D00DFA4B7 /* Exceptions for "DailyMovieChallenge" folder in "DailyMovieChallenge" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E55052682F1F1BBB00DE9B03 /* DailyMovieChallenge */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E550526B2F1F1BBB00DE9B03 /* DailyMovieChallenge */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E5AFEDBC2F21B93D00DFA4B7 /* Exceptions for "DailyMovieChallenge" folder in "DailyMovieChallenge" target */,
+			);
 			path = DailyMovieChallenge;
 			sourceTree = "<group>";
 		};
@@ -32,6 +46,7 @@
 				E5AFECA92F1F1E9700DFA4B7 /* FirebaseCore in Frameworks */,
 				E5AFECA72F1F1E9700DFA4B7 /* FirebaseAuth in Frameworks */,
 				E5AFECAB2F1F1E9700DFA4B7 /* FirebaseFirestore in Frameworks */,
+				E5AFECAD2F1F1E9700DFA4B8 /* FirebaseMessaging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -77,6 +92,7 @@
 				E5AFECA62F1F1E9700DFA4B7 /* FirebaseAuth */,
 				E5AFECA82F1F1E9700DFA4B7 /* FirebaseCore */,
 				E5AFECAA2F1F1E9700DFA4B7 /* FirebaseFirestore */,
+				E5AFECAC2F1F1E9700DFA4B8 /* FirebaseMessaging */,
 			);
 			productName = DailyMovieChallenge;
 			productReference = E55052692F1F1BBB00DE9B03 /* DailyMovieChallenge.app */;
@@ -264,12 +280,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DailyMovieChallenge/DailyMovieChallenge.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DailyMovieChallenge/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -295,12 +314,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DailyMovieChallenge/DailyMovieChallenge.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DailyMovieChallenge/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -370,6 +392,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E5AFECA52F1F1E9700DFA4B7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		E5AFECAC2F1F1E9700DFA4B8 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E5AFECA52F1F1E9700DFA4B7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

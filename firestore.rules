@@ -1,22 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users: apenas o próprio usuário pode ler/escrever
+    // Users: leitura pública para leaderboard, escrita apenas pelo próprio usuário
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if true; // Permitir leitura para leaderboard
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
-    
+
     // Daily Challenges: leitura pública, escrita apenas por Cloud Functions
     match /dailyChallenges/{date} {
       allow read: if true;
       allow write: if false; // Apenas Cloud Functions
     }
-    
-    // Comments: leitura pública, escrita autenticada
+
+    // Comments: leitura pública (apenas não reportados), escrita autenticada
     match /comments/{commentId} {
       allow read: if true;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && 
+                       (request.auth.uid == resource.data.userId || 
+                        request.resource.data.keys().hasOnly(['text', 'editedAt']) && 
+                        request.auth.uid == resource.data.userId);
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Comment Likes: escrita autenticada
+    match /commentLikes/{likeId} {
+      allow read: if true;
       allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null;
+    }
+    
+    // FCM Tokens: apenas o próprio usuário pode ler/escrever
+    match /fcmTokens/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Notification Settings: apenas o próprio usuário pode ler/escrever
+    match /notificationSettings/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

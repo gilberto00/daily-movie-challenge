@@ -21,36 +21,26 @@ class DailyChallengeViewModel: ObservableObject {
     private let firestoreService = FirestoreService.shared
     
     func loadDailyChallenge() async {
-        print("🔄 [DailyChallengeViewModel] loadDailyChallenge() called")
         isLoading = true
         error = nil
         
         do {
-            print("📡 [DailyChallengeViewModel] Fetching challenge...")
             challenge = try await challengeService.fetchDailyChallenge()
-            print("✅ [DailyChallengeViewModel] Challenge loaded: \(challenge?.title ?? "nil")")
             
             // Carregar streak do usuário
             if let userId = AuthService.shared.getCurrentUserId() {
-                print("👤 [DailyChallengeViewModel] Loading streak for user: \(userId)")
                 do {
                     userStreak = try await firestoreService.getUserStreak(userId: userId)
-                    print("✅ [DailyChallengeViewModel] Streak loaded: \(userStreak)")
-                } catch let streakError {
-                    print("⚠️ [DailyChallengeViewModel] Error loading streak: \(streakError.localizedDescription)")
+                } catch {
                     // Não bloquear se falhar carregar streak
                     userStreak = 0
                 }
-            } else {
-                print("⚠️ [DailyChallengeViewModel] No user ID available for streak")
             }
-        } catch let challengeError {
-            print("❌ [DailyChallengeViewModel] Error loading challenge: \(challengeError.localizedDescription)")
-            self.error = challengeError
+        } catch {
+            self.error = error
         }
         
         isLoading = false
-        print("✅ [DailyChallengeViewModel] loadDailyChallenge() completed")
     }
     
     func submitAnswer(_ answer: String) async -> ChallengeResult {
@@ -60,23 +50,21 @@ class DailyChallengeViewModel: ObservableObject {
         
         let isCorrect = answer == challenge.correctAnswer
         
-        // Atualizar streak se correto
-        if isCorrect, let userId = AuthService.shared.getCurrentUserId() {
-            let newStreak = userStreak + 1
+        // Atualizar estatísticas do usuário
+        if let userId = AuthService.shared.getCurrentUserId() {
+            // Calcular novo streak
+            let newStreak = isCorrect ? userStreak + 1 : 0
+            
             do {
+                // Atualizar streak primeiro
                 try await firestoreService.updateUserStreak(userId: userId, streak: newStreak)
                 userStreak = newStreak
+                
+                // Atualizar estatísticas completas (totalChallenges, correctAnswers, score, badges)
+                try await firestoreService.updateUserStats(userId: userId, isCorrect: isCorrect)
             } catch {
                 // Log error, mas não bloquear o fluxo
-                print("Error updating streak: \(error)")
-            }
-        } else if !isCorrect, let userId = AuthService.shared.getCurrentUserId() {
-            // Zerar streak se errado
-            do {
-                try await firestoreService.updateUserStreak(userId: userId, streak: 0)
-                userStreak = 0
-            } catch {
-                print("Error updating streak: \(error)")
+                print("⚠️ [DailyChallengeViewModel] Error updating user stats: \(error.localizedDescription)")
             }
         }
         
@@ -101,34 +89,16 @@ class DailyChallengeViewModel: ObservableObject {
     }
     
     func loadNewMovieChallenge() async {
-        print("🔄 [DailyChallengeViewModel] loadNewMovieChallenge() called")
-        print("🔄 [DailyChallengeViewModel] Current state - isLoading: \(isLoading), challenge: \(challenge != nil ? challenge!.title : "nil")")
-        
-        await MainActor.run {
-            isLoading = true
-            error = nil
-            print("🔄 [DailyChallengeViewModel] Set isLoading = true")
-        }
+        isLoading = true
+        error = nil
         
         do {
             let newChallenge = try await challengeService.fetchNewMovieChallenge()
-            
-            await MainActor.run {
-                challenge = newChallenge
-                isLoading = false
-                print("✅ [DailyChallengeViewModel] New challenge loaded: \(newChallenge.title) (ID: \(newChallenge.id), MovieID: \(newChallenge.movieId))")
-                print("✅ [DailyChallengeViewModel] Set isLoading = false")
-                print("✅ [DailyChallengeViewModel] Current state - isLoading: \(isLoading), challenge: \(challenge != nil ? challenge!.title : "nil")")
-            }
+            challenge = newChallenge
+            isLoading = false
         } catch {
-            print("❌ [DailyChallengeViewModel] Error loading new challenge: \(error.localizedDescription)")
-            await MainActor.run {
-                self.error = error
-                isLoading = false
-                print("❌ [DailyChallengeViewModel] Set isLoading = false (error state)")
-            }
+            self.error = error
+            isLoading = false
         }
-        
-        print("✅ [DailyChallengeViewModel] loadNewMovieChallenge() completed")
     }
 }

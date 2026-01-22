@@ -35,65 +35,128 @@ struct TriviaView: View {
                         .cornerRadius(12)
                         .shadow(radius: 6)
                     }
-                    
+
                     // Movie Title
                     Text(challenge.title)
                         .font(.title3)
                         .fontWeight(.semibold)
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.top, 8)
-                
+
                 Divider()
                     .padding(.vertical, 8)
-                
+
                 // Question
                 Text(challenge.question)
                     .font(.title2)
                     .fontWeight(.semibold)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
+
+                // Answer Options - Layout adaptativo
+                // Se as opções são curtas (anos, números), usar grid 2x2
+                // Se são longas (textos), usar lista vertical
+                let optionsAreShort = challenge.options.allSatisfy { $0.count <= 10 }
                 
-                // Answer Options
-                VStack(spacing: 16) {
-                    ForEach(challenge.options, id: \.self) { option in
-                        Button {
-                            gameViewModel.selectAnswer(option)
-                        } label: {
-                            HStack {
-                                Text(option)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                Spacer()
-                                if gameViewModel.selectedAnswer == option {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(.blue)
+                if optionsAreShort && challenge.options.count == 4 {
+                    // Grid 2x2 para opções curtas
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)
+                    ], spacing: 16) {
+                        ForEach(challenge.options, id: \.self) { option in
+                            Button {
+                                gameViewModel.selectAnswer(option)
+                            } label: {
+                                VStack(spacing: 8) {
+                                    Text(option)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                        .multilineTextAlignment(.center)
+                                        .lineLimit(2)
+                                    
+                                    if gameViewModel.selectedAnswer == option {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.blue)
+                                            .font(.title3)
+                                    }
                                 }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 80)
+                                .padding()
+                                .background(
+                                    gameViewModel.selectedAnswer == option
+                                        ? Color.blue.opacity(0.1)
+                                        : Color.gray.opacity(0.1)
+                                )
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(
+                                            gameViewModel.selectedAnswer == option
+                                                ? Color.blue
+                                                : Color.clear,
+                                            lineWidth: 2
+                                        )
+                                )
                             }
-                            .padding()
-                            .background(
-                                gameViewModel.selectedAnswer == option
-                                    ? Color.blue.opacity(0.1)
-                                    : Color.gray.opacity(0.1)
-                            )
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        gameViewModel.selectedAnswer == option
-                                            ? Color.blue
-                                            : Color.clear,
-                                        lineWidth: 2
-                                    )
-                            )
+                            .disabled(gameViewModel.showResult)
                         }
-                        .disabled(gameViewModel.showResult)
                     }
+                    .padding(.horizontal)
+                } else {
+                    // Lista vertical para opções longas ou quantidade diferente
+                    VStack(spacing: 16) {
+                        ForEach(challenge.options, id: \.self) { option in
+                            Button {
+                                gameViewModel.selectAnswer(option)
+                            } label: {
+                                HStack {
+                                    Text(option)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                        .multilineTextAlignment(.leading)
+                                        .lineLimit(3)
+                                    Spacer()
+                                    if gameViewModel.selectedAnswer == option {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.blue)
+                                    }
+                                }
+                                .padding()
+                                .background(
+                                    gameViewModel.selectedAnswer == option
+                                        ? Color.blue.opacity(0.1)
+                                        : Color.gray.opacity(0.1)
+                                )
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(
+                                            gameViewModel.selectedAnswer == option
+                                                ? Color.blue
+                                                : Color.clear,
+                                            lineWidth: 2
+                                        )
+                                )
+                            }
+                            .disabled(gameViewModel.showResult)
+                        }
+                    }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
+            }
+            .padding()
+        }
+        .safeAreaInset(edge: .bottom) {
+            // Botão fixo acima da área segura - SwiftUI ajusta automaticamente o ScrollView
+            VStack(spacing: 0) {
+                Divider()
                 
-                // Submit Button
                 Button {
                     Task {
                         guard let selected = gameViewModel.selectedAnswer else { return }
@@ -116,8 +179,14 @@ struct TriviaView: View {
                 }
                 .disabled(gameViewModel.selectedAnswer == nil)
                 .padding(.horizontal)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+                .background(Color(.systemBackground))
             }
-            .padding()
+            .background(
+                Color(.systemBackground)
+                    .shadow(color: .black.opacity(0.05), radius: 3, y: -2)
+            )
         }
         .navigationTitle("Challenge")
         .navigationBarTitleDisplayMode(.inline)
@@ -149,15 +218,9 @@ struct TriviaView: View {
                     challengeId: challenge.id,
                     movieId: challenge.movieId
                 ) {
-                    // Callback para voltar para Home
-                    print("🔄 [TriviaView] Back to Home callback chamado do ResultView")
-                    // Resetar o estado de navegação do ResultView
+                    // Voltar direto para Home - limpar toda a pilha
                     navigateToResult = false
-                    // Aguardar um pouco antes de chamar o callback do HomeView
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        print("🔄 [TriviaView] Chamando onBackToHome() para voltar para Home")
-                        onBackToHome()
-                    }
+                    onBackToHome()
                 }
                 .environmentObject(challengeViewModel)
             }

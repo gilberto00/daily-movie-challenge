@@ -7,6 +7,12 @@
 
 import SwiftUI
 
+// Enum para destinos de navegação
+enum NavigationDestination: Hashable {
+    case trivia
+    case result
+}
+
 // Componente separado para o poster usando URLSession diretamente para evitar cancelamentos
 struct MoviePosterImageView: View {
     let posterUrl: String?
@@ -35,6 +41,10 @@ struct MoviePosterImageView: View {
                         .font(.largeTitle)
                     Text("Failed to load")
                         .font(.caption)
+                    Text(error.localizedDescription)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
                     Button("Retry") {
                         loadImage()
                     }
@@ -171,7 +181,8 @@ struct MoviePosterImageView: View {
 
 struct HomeView: View {
     @EnvironmentObject var challengeViewModel: DailyChallengeViewModel
-    @State private var navigateToTrivia = false
+    @Binding var navigationPath: NavigationPath
+    @State private var showLeaderboard = false
     
     var body: some View {
         ScrollView {
@@ -182,12 +193,26 @@ struct HomeView: View {
                     .fontWeight(.bold)
                     .padding(.top)
                 
-                // Streak Indicator
+                // Streak Indicator com botão de Leaderboard
                 HStack {
                     Image(systemName: "flame.fill")
                         .foregroundColor(.orange)
                     Text("Streak: \(challengeViewModel.userStreak)")
                         .font(.headline)
+                    
+                    Spacer()
+                    
+                    Button {
+                        showLeaderboard = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "trophy.fill")
+                                .foregroundColor(.orange)
+                            Text("Leaderboard")
+                                .font(.subheadline)
+                                .foregroundColor(.orange)
+                        }
+                    }
                 }
                 .padding()
                 .background(Color.orange.opacity(0.1))
@@ -207,7 +232,7 @@ struct HomeView: View {
                     
                     // Play Button
                     Button {
-                        navigateToTrivia = true
+                        navigationPath.append(NavigationDestination.trivia)
                     } label: {
                         Text("Play")
                             .font(.headline)
@@ -263,21 +288,34 @@ struct HomeView: View {
                 challengeViewModel.isLoading = false
             }
         }
-        .navigationDestination(isPresented: $navigateToTrivia) {
-            if let challenge = challengeViewModel.challenge {
-                TriviaView(
-                    challenge: challenge,
-                    onBackToHome: {
-                        navigateToTrivia = false
-                    }
-                )
-                .environmentObject(challengeViewModel)
+        .navigationDestination(for: NavigationDestination.self) { destination in
+            switch destination {
+            case .trivia:
+                if let challenge = challengeViewModel.challenge {
+                    TriviaView(
+                        challenge: challenge,
+                        onBackToHome: {
+                            // Limpar toda a pilha de navegação
+                            navigationPath.removeLast(navigationPath.count)
+                        }
+                    )
+                    .environmentObject(challengeViewModel)
+                }
+            case .result:
+                EmptyView() // Não usado aqui, mas necessário para o enum ser exaustivo
+            }
+        }
+        .sheet(isPresented: $showLeaderboard) {
+            NavigationStack {
+                LeaderboardView()
             }
         }
     }
 }
 
 #Preview {
-    HomeView()
-        .environmentObject(DailyChallengeViewModel())
+    NavigationStack {
+        HomeView(navigationPath: .constant(NavigationPath()))
+            .environmentObject(DailyChallengeViewModel())
+    }
 }

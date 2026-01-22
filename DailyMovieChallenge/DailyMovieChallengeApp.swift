@@ -7,6 +7,8 @@
 
 import SwiftUI
 import FirebaseCore
+import FirebaseMessaging
+import UserNotifications
 
 @main
 struct DailyMovieChallengeApp: App {
@@ -23,6 +25,9 @@ struct DailyMovieChallengeApp: App {
         } else {
             print("⚠️ [DailyMovieChallengeApp] WARNING: GoogleService-Info.plist not found!")
         }
+        
+        // Setup FCM
+        NotificationService.shared.setupFCM()
     }
     
     var body: some Scene {
@@ -32,6 +37,11 @@ struct DailyMovieChallengeApp: App {
                 .task {
                     print("🔄 [DailyMovieChallengeApp] App task started - authenticating...")
                     await authViewModel.authenticate()
+                    
+                    // Solicitar permissão de notificações após autenticação
+                    if authViewModel.isAuthenticated {
+                        _ = await NotificationService.shared.requestAuthorization()
+                    }
                 }
                 .onAppear {
                     print("✅ [DailyMovieChallengeApp] App appeared")

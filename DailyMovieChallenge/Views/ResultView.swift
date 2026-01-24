@@ -20,8 +20,12 @@ struct ResultView: View {
     @State private var isLoadingCommentsCount = false
     @State private var showResult = false
     @State private var isLoadingExtra = false
-    @State private var playedQuestionTypes: [String] = []
     @State private var navigateToExtraQuestion = false
+    
+    // Computed property para verificar se todas as perguntas foram jogadas
+    private var allQuestionsPlayed: Bool {
+        challengeViewModel.areAllQuestionsPlayed(for: movieId)
+    }
     
     var body: some View {
         ScrollView {
@@ -108,21 +112,19 @@ struct ResultView: View {
                 Button {
                     Task {
                         isLoadingExtra = true
-                        await challengeViewModel.loadExtraQuestion(movieId: movieId, excludeTypes: playedQuestionTypes)
+                        // Obter tipos já jogados do ViewModel
+                        let excludeTypes = challengeViewModel.getPlayedQuestionTypes(for: movieId)
+                        await challengeViewModel.loadExtraQuestion(movieId: movieId, excludeTypes: excludeTypes)
                         isLoadingExtra = false
-                        if let challenge = challengeViewModel.challenge {
-                            // Adicionar tipo de pergunta jogada
-                            if let questionType = challenge.questionType {
-                                playedQuestionTypes.append(questionType)
-                            }
+                        if challengeViewModel.challenge != nil {
                             // Navegar direto para nova pergunta do mesmo filme
                             navigateToExtraQuestion = true
                         }
                     }
                 } label: {
                     HStack {
-                        Image(systemName: "questionmark.circle.fill")
-                        Text("More Questions (Same Movie)")
+                        Image(systemName: allQuestionsPlayed ? "checkmark.circle.fill" : "questionmark.circle.fill")
+                        Text(allQuestionsPlayed ? "All Questions Played" : "More Questions (Same Movie)")
                             .font(.headline)
                         Spacer()
                         if isLoadingExtra {
@@ -133,10 +135,10 @@ struct ResultView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.green)
+                    .background(allQuestionsPlayed ? Color.gray : Color.green)
                     .cornerRadius(12)
                 }
-                .disabled(isLoadingExtra)
+                .disabled(isLoadingExtra || allQuestionsPlayed)
                 
                 // New Movie Challenge Button
                 Button {
@@ -149,8 +151,8 @@ struct ResultView: View {
                         if let newChallenge = challengeViewModel.challenge {
                             print("✅ [ResultView] New challenge loaded: \(newChallenge.title) (ID: \(newChallenge.id))")
                             
-                            // Resetar tipos jogados para novo filme
-                            playedQuestionTypes = []
+                            // Resetar rastreamento de perguntas para novo filme
+                            challengeViewModel.resetQuestionTracking()
                             
                             // AGUARDAR que o ViewModel termine completamente
                             // O loadNewMovieChallenge já deve ter setado isLoading = false

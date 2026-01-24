@@ -8,6 +8,8 @@
 import Foundation
 import UserNotifications
 import FirebaseMessaging
+import Combine
+import UIKit
 
 class NotificationService: NSObject, ObservableObject {
     static let shared = NotificationService()

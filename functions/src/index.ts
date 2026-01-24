@@ -102,11 +102,15 @@ export const getExtraQuestion = functions
       }
 
       // Gerar pergunta diferente (que não foi jogada ainda)
+      // A função generateRandomQuestion já evita tipos excluídos
       const questionData = generateRandomQuestion(movie, excludeTypes);
       const curiosity = generateCuriosity(movie);
+      
+      // Gerar ID único baseado em timestamp e random string para evitar duplicatas
+      const uniqueId = `${movieId}-${questionData.questionType}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
       res.json({
-        id: `${movieId}-${questionData.questionType}-${Date.now()}`,
+        id: uniqueId,
         movieId: movie.id,
         title: movie.title,
         posterUrl: getPosterUrl(movie.poster_path),

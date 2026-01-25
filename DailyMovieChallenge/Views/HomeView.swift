@@ -7,12 +7,6 @@
 
 import SwiftUI
 
-// Enum para destinos de navegação
-enum NavigationDestination: Hashable {
-    case trivia
-    case result
-}
-
 // Componente separado para o poster usando URLSession diretamente para evitar cancelamentos
 struct MoviePosterImageView: View {
     let posterUrl: String?
@@ -183,6 +177,7 @@ struct HomeView: View {
     @EnvironmentObject var challengeViewModel: DailyChallengeViewModel
     @Binding var navigationPath: NavigationPath
     @State private var showLeaderboard = false
+    @State private var showNotificationSettings = false
     
     var body: some View {
         ScrollView {
@@ -193,7 +188,7 @@ struct HomeView: View {
                     .fontWeight(.bold)
                     .padding(.top)
                 
-                // Streak Indicator com botão de Leaderboard
+                // Streak Indicator com botões de Leaderboard e Settings
                 HStack {
                     Image(systemName: "flame.fill")
                         .foregroundColor(.orange)
@@ -212,6 +207,13 @@ struct HomeView: View {
                                 .font(.subheadline)
                                 .foregroundColor(.orange)
                         }
+                    }
+                    
+                    Button {
+                        showNotificationSettings = true
+                    } label: {
+                        Image(systemName: "bell.fill")
+                            .foregroundColor(.blue)
                     }
                 }
                 .padding()
@@ -303,11 +305,20 @@ struct HomeView: View {
                 }
             case .result:
                 EmptyView() // Não usado aqui, mas necessário para o enum ser exaustivo
+            case .leaderboard:
+                LeaderboardView()
+            case .settings:
+                NotificationSettingsView()
             }
         }
         .sheet(isPresented: $showLeaderboard) {
             NavigationStack {
                 LeaderboardView()
+            }
+        }
+        .sheet(isPresented: $showNotificationSettings) {
+            NavigationStack {
+                NotificationSettingsView()
             }
         }
     }

@@ -9,9 +9,10 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var deepLinkService: DeepLinkService
     @StateObject private var challengeViewModel = DailyChallengeViewModel()
     @State private var hasLoadedInitialChallenge = false
-    @State private var navigationPath = NavigationPath()
+    @Binding var navigationPath: NavigationPath
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -73,6 +74,7 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(navigationPath: .constant(NavigationPath()))
         .environmentObject(AuthViewModel())
+        .environmentObject(DeepLinkService.shared)
 }

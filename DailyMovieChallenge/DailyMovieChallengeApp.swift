@@ -13,6 +13,8 @@ import UserNotifications
 @main
 struct DailyMovieChallengeApp: App {
     @StateObject private var authViewModel = AuthViewModel()
+    @StateObject private var deepLinkService = DeepLinkService.shared
+    @State private var navigationPath = NavigationPath()
     
     init() {
         print("🚀 [DailyMovieChallengeApp] App initializing...")
@@ -32,8 +34,9 @@ struct DailyMovieChallengeApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(navigationPath: $navigationPath)
                 .environmentObject(authViewModel)
+                .environmentObject(deepLinkService)
                 .task {
                     print("🔄 [DailyMovieChallengeApp] App task started - authenticating...")
                     await authViewModel.authenticate()
@@ -46,6 +49,38 @@ struct DailyMovieChallengeApp: App {
                 .onAppear {
                     print("✅ [DailyMovieChallengeApp] App appeared")
                 }
+                .onOpenURL { url in
+                    print("🔗 [DailyMovieChallengeApp] Received URL: \(url)")
+                    handleDeepLink(url)
+                }
         }
+    }
+    
+    private func handleDeepLink(_ url: URL) {
+        guard let destination = deepLinkService.handleURL(url) else {
+            print("⚠️ [DailyMovieChallengeApp] Could not handle deep link: \(url)")
+            return
+        }
+        
+        // Converte DeepLinkDestination para NavigationDestination
+        let navDestination: NavigationDestination
+        switch destination {
+        case .home:
+            // Limpar navegação e voltar para home
+            navigationPath.removeLast(navigationPath.count)
+            return
+        case .trivia, .challenge:
+            navDestination = .trivia
+        case .result:
+            navDestination = .result
+        case .leaderboard:
+            navDestination = .leaderboard
+        case .settings:
+            navDestination = .settings
+        }
+        
+        // Navegar para o destino
+        navigationPath.append(navDestination)
+        print("✅ [DailyMovieChallengeApp] Navigating to: \(navDestination)")
     }
 }

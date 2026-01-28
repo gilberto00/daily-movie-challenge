@@ -36,9 +36,13 @@ class NotificationService: NSObject, ObservableObject {
             }
             
             if granted {
+                print("✅ [NotificationService] Notification authorization granted")
                 await MainActor.run {
                     UIApplication.shared.registerForRemoteNotifications()
                 }
+                print("✅ [NotificationService] Registered for remote notifications")
+            } else {
+                print("⚠️ [NotificationService] Notification authorization denied")
             }
             
             return granted
@@ -75,14 +79,20 @@ class NotificationService: NSObject, ObservableObject {
             self.fcmToken = token
         }
         
+        print("✅ [NotificationService] FCM token received: \(token)")
+        
         // Salvar token no Firestore
         if let userId = AuthService.shared.getCurrentUserId() {
             do {
                 try await firestoreService.saveFCMToken(userId: userId, token: token)
-                print("✅ [NotificationService] FCM token saved to Firestore")
+                print("✅ [NotificationService] FCM token saved to Firestore for user: \(userId)")
+                print("📋 [NotificationService] Copy this token to test notifications in Firebase Console:")
+                print("   \(token)")
             } catch {
                 print("⚠️ [NotificationService] Error saving FCM token: \(error)")
             }
+        } else {
+            print("⚠️ [NotificationService] User not authenticated, cannot save FCM token")
         }
     }
     

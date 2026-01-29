@@ -14,8 +14,18 @@ class ChallengeService {
     
     private init() {}
     
+    /// Data de hoje no fuso do usuário, formato YYYY-MM-DD (mesmo que o servidor use para o desafio do dia)
+    static func todayDateString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone.current
+        return formatter.string(from: Date())
+    }
+    
     func fetchDailyChallenge() async throws -> DailyChallenge {
-        let urlString = "\(baseURL)/getDailyChallenge"
+        // Usar data de hoje (YYYY-MM-DD) para um único desafio por dia
+        let today = Self.todayDateString()
+        let urlString = "\(baseURL)/getDailyChallenge?date=\(today)"
         print("🔍 [ChallengeService] Fetching challenge from: \(urlString)")
         
         guard let url = URL(string: urlString) else {

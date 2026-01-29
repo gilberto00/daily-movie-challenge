@@ -6,8 +6,9 @@ import { generateYearQuestion, generateCuriosity, generateRandomQuestion } from 
 admin.initializeApp();
 
 /**
- * Retorna o desafio da hora (ou gera se não existir)
- * GET /getDailyChallenge?date=YYYY-MM-DD-HH (opcional, default: hora atual)
+ * Retorna o desafio do dia (ou gera se não existir)
+ * GET /getDailyChallenge?date=YYYY-MM-DD (opcional, default: dia atual)
+ * Um único desafio por dia; não muda durante o dia.
  */
 export const getDailyChallenge = functions
   .region('us-central1')
@@ -24,9 +25,9 @@ export const getDailyChallenge = functions
     }
 
     try {
-      // Obter data/hora (hora atual ou parâmetro)
+      // Obter data (dia atual ou parâmetro YYYY-MM-DD)
       const dateParam = req.query.date as string | undefined;
-      const date = dateParam || getCurrentHourString();
+      const date = dateParam || getTodayString();
 
       const db = admin.firestore();
       const challengeRef = db.collection('dailyChallenges').doc(date);
@@ -171,15 +172,14 @@ export const getNewMovieChallenge = functions
   });
 
 /**
- * Helper: Retorna hora atual no formato YYYY-MM-DD-HH
+ * Helper: Retorna data de hoje no formato YYYY-MM-DD (um desafio por dia)
  */
-function getCurrentHourString(): string {
+function getTodayString(): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
-  const hour = String(now.getHours()).padStart(2, '0');
-  return `${year}-${month}-${day}-${hour}`;
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -225,12 +225,9 @@ export const sendDailyChallengeNotification = functions
         return null;
       }
       
-      // Buscar desafio do dia
-      const today = new Date().toISOString().split('T')[0];
-      const hour = new Date().getHours();
-      const challengeId = `${today}-${hour}`;
-      
-      const challengeDoc = await db.collection('dailyChallenges').doc(challengeId).get();
+      // Buscar desafio do dia (um por dia)
+      const today = getTodayString();
+      const challengeDoc = await db.collection('dailyChallenges').doc(today).get();
       let movieTitle = 'filmes';
       
       if (challengeDoc.exists) {
@@ -246,7 +243,7 @@ export const sendDailyChallengeNotification = functions
         },
         data: {
           type: 'dailyChallenge',
-          challengeId: challengeId,
+          challengeId: today,
           screen: 'home'
         },
         tokens: tokens

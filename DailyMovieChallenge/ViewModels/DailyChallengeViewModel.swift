@@ -23,6 +23,8 @@ class DailyChallengeViewModel: ObservableObject {
     private var playedQuestionTypesByMovie: [Int: Set<String>] = [:]
     // Rastrear texto completo das perguntas já jogadas por filme (movieId -> Set<questionText>)
     private var playedQuestionTextsByMovie: [Int: Set<String>] = [:]
+    /// Se o desafio atual veio de loadDailyChallenge (streak só atualiza ao completar o desafio do dia)
+    private var isCurrentChallengeDaily: Bool = false
     
     private let challengeService = ChallengeService.shared
     private let firestoreService = FirestoreService.shared
@@ -34,13 +36,14 @@ class DailyChallengeViewModel: ObservableObject {
         do {
             let newChallenge = try await challengeService.fetchDailyChallenge()
             challenge = newChallenge
+            isCurrentChallengeDaily = true
             
             // Registrar pergunta inicial como jogada
             if let challenge = challenge {
                 markQuestionAsPlayed(challenge)
             }
             
-            // Carregar streak do usuário
+            // Carregar streak do usuário (só leitura; não zera ao entrar)
             if let userId = AuthService.shared.getCurrentUserId() {
                 do {
                     userStreak = try await firestoreService.getUserStreak(userId: userId)
@@ -68,18 +71,20 @@ class DailyChallengeViewModel: ObservableObject {
         
         // Atualizar estatísticas do usuário
         if let userId = AuthService.shared.getCurrentUserId() {
-            // Calcular novo streak
-            let newStreak = isCorrect ? userStreak + 1 : 0
-            
             do {
-                // Atualizar streak primeiro
-                try await firestoreService.updateUserStreak(userId: userId, streak: newStreak)
-                userStreak = newStreak
-                
-                // Atualizar estatísticas completas (totalChallenges, correctAnswers, score, badges)
-                try await firestoreService.updateUserStats(userId: userId, isCorrect: isCorrect)
+                // Streak só muda ao completar o desafio do dia (uma vez por dia); perguntas extras não alteram
+                let isDaily = isCurrentChallengeDaily
+                let dateForStreak = isDaily ? challenge.id : nil // id do diário é YYYY-MM-DD
+                let newStreak = try await firestoreService.updateUserStats(
+                    userId: userId,
+                    isCorrect: isCorrect,
+                    isDailyChallengeCompletion: isDaily,
+                    challengeDate: dateForStreak
+                )
+                if let newStreak = newStreak {
+                    userStreak = newStreak
+                }
             } catch {
-                // Log error, mas não bloquear o fluxo
                 print("⚠️ [DailyChallengeViewModel] Error updating user stats: \(error.localizedDescription)")
             }
         }
@@ -141,6 +146,7 @@ class DailyChallengeViewModel: ObservableObject {
         
         if let newChallenge = newChallenge {
             challenge = newChallenge
+            isCurrentChallengeDaily = false
             markQuestionAsPlayed(newChallenge)
         } else {
             // Se não conseguiu gerar pergunta nova após várias tentativas
@@ -161,6 +167,7 @@ class DailyChallengeViewModel: ObservableObject {
         do {
             let newChallenge = try await challengeService.fetchNewMovieChallenge()
             challenge = newChallenge
+            isCurrentChallengeDaily = false
             
             // Registrar nova pergunta como jogada
             if let challenge = challenge {

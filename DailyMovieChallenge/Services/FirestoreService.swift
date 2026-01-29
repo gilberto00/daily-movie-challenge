@@ -246,7 +246,14 @@ class FirestoreService {
     
     // MARK: - User Statistics & Leaderboard
     
-    func updateUserStats(userId: String, isCorrect: Bool) async throws {
+    /// Atualiza estatísticas. Se for conclusão do desafio do dia, calcula e atualiza streak (uma vez por dia).
+    /// - Returns: Novo valor da streak quando isDailyChallengeCompletion é true; nil caso contrário.
+    func updateUserStats(
+        userId: String,
+        isCorrect: Bool,
+        isDailyChallengeCompletion: Bool = false,
+        challengeDate: String? = nil
+    ) async throws -> Int? {
         let userRef = db.collection("users").document(userId)
         
         // Buscar dados atuais
@@ -254,53 +261,94 @@ class FirestoreService {
         
         // Se o documento não existe, criar primeiro
         if !userDoc.exists {
+            let initialStreak = (isDailyChallengeCompletion && isCorrect && challengeDate != nil) ? 1 : 0
             try await userRef.setData([
                 "createdAt": FieldValue.serverTimestamp(),
-                "streak": 0,
+                "streak": initialStreak,
                 "totalChallenges": 1,
                 "correctAnswers": isCorrect ? 1 : 0,
                 "totalAnswers": 1,
-                "score": isCorrect ? 11 : 1, // streak*10 + accuracy + challenges
+                "score": isCorrect ? 11 : 1,
                 "badges": [],
                 "lastChallengeDate": FieldValue.serverTimestamp()
             ])
-            print("✅ [FirestoreService] User created with initial stats")
-            return
+            print("✅ [FirestoreService] User created with initial stats, streak: \(initialStreak)")
+            return isDailyChallengeCompletion ? initialStreak : nil
         }
         
         guard let data = userDoc.data() else {
             print("⚠️ [FirestoreService] User document exists but has no data")
-            return
+            return nil
         }
         
         let totalChallenges = (data["totalChallenges"] as? Int) ?? 0
         let correctAnswers = (data["correctAnswers"] as? Int) ?? 0
         let totalAnswers = (data["totalAnswers"] as? Int) ?? 0
-        let streak = (data["streak"] as? Int) ?? 0
+        var streak = (data["streak"] as? Int) ?? 0
+        
+        // Streak só muda quando é conclusão do desafio do dia (uma vez por dia)
+        if isDailyChallengeCompletion, let todayStr = challengeDate {
+            let lastTimestamp = data["lastChallengeDate"] as? Timestamp
+            let lastStr = lastTimestamp.map { Self.dateToYYYYMMDD($0.dateValue()) } ?? ""
+            let yesterdayStr = Self.yesterdayString(from: todayStr)
+            
+            if lastStr == todayStr {
+                // Já completou hoje: mantém streak (não zera se errar de novo)
+            } else if isCorrect {
+                if lastStr == yesterdayStr {
+                    streak = streak + 1
+                } else {
+                    // Perdeu um ou mais dias, ou primeiro dia
+                    streak = 1
+                }
+            } else {
+                streak = 0
+            }
+            print("📊 [FirestoreService] Daily completion - today: \(todayStr), last: \(lastStr), newStreak: \(streak)")
+        }
         
         let newTotalChallenges = totalChallenges + 1
         let newCorrectAnswers = isCorrect ? correctAnswers + 1 : correctAnswers
         let newTotalAnswers = totalAnswers + 1
-        
-        // Calcular pontuação
         let accuracyRate = newTotalAnswers > 0 ? Double(newCorrectAnswers) / Double(newTotalAnswers) * 100.0 : 0.0
-        let score = Int(Double(streak * 10) + accuracyRate + Double(newTotalChallenges))
+        let score = Int(Double(streak) * 10.0 + accuracyRate + Double(newTotalChallenges))
         
         print("📊 [FirestoreService] Updating stats - Score: \(score), Streak: \(streak), Accuracy: \(String(format: "%.1f", accuracyRate))%")
         
-        // Atualizar dados
-        try await userRef.updateData([
+        var updatePayload: [String: Any] = [
             "totalChallenges": newTotalChallenges,
             "correctAnswers": newCorrectAnswers,
             "totalAnswers": newTotalAnswers,
             "score": score,
             "lastChallengeDate": FieldValue.serverTimestamp()
-        ])
+        ]
+        if isDailyChallengeCompletion {
+            updatePayload["streak"] = streak
+        }
+        try await userRef.updateData(updatePayload)
         
         print("✅ [FirestoreService] Stats updated successfully")
-        
-        // Verificar badges
         try await checkAndAwardBadges(userId: userId)
+        return isDailyChallengeCompletion ? streak : nil
+    }
+    
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone.current
+        return f
+    }()
+    
+    private static func dateToYYYYMMDD(_ date: Date) -> String {
+        dateFormatter.string(from: date)
+    }
+    
+    /// Retorna o dia anterior a uma data no formato YYYY-MM-DD
+    private static func yesterdayString(from yyyyMMdd: String) -> String {
+        guard let date = dateFormatter.date(from: yyyyMMdd) else { return "" }
+        let cal = Calendar.current
+        guard let yesterday = cal.date(byAdding: .day, value: -1, to: date) else { return "" }
+        return dateFormatter.string(from: yesterday)
     }
     
     private func checkAndAwardBadges(userId: String) async throws {

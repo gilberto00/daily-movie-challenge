@@ -50,6 +50,11 @@
 "leaderboard.player" = "Player";
 "leaderboard.position_format" = "#%d";
 "leaderboard.badges_more_format" = "+%d";
+"leaderboard.edit_name" = "Edit name";
+"leaderboard.edit_name_title" = "Your name in the ranking";
+"leaderboard.your_name_placeholder" = "Your name or nickname";
+"leaderboard.add_name" = "Add name";
+"leaderboard.add_name_prompt" = "Add your name to the ranking";
 
 /* Badges */
 "badge.7_days" = "7 Days";

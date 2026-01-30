@@ -18,7 +18,7 @@ Lista consolidada com os pontos que você escolheu, em ordem sugerida para imple
 
 ---
 
-## 2. Nomes no leaderboard (em vez de só “Player”)
+## 2. Nomes no leaderboard (em vez de só "Player") ✅ “Player”)
 
 **Objetivo:** No ranking, mostrar nome ou apelido do jogador em vez de “Player” para todos.
 

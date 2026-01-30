@@ -10,6 +10,10 @@ import SwiftUI
 struct LeaderboardView: View {
     @StateObject private var viewModel = LeaderboardViewModel()
     @Environment(\.dismiss) var dismiss
+    @State private var showEditNameSheet = false
+    @State private var editNameText = ""
+    
+    private let displayNameMaxLength = 25
     
     var body: some View {
         ScrollView {
@@ -35,7 +39,7 @@ struct LeaderboardView: View {
                         
                         HStack {
                             if let rank = userEntry.rank {
-                                Text("#\(rank)")
+                                Text(String(format: String(localized: "leaderboard.position_format"), rank))
                                     .font(.title2)
                                     .fontWeight(.bold)
                                     .foregroundColor(.blue)
@@ -55,7 +59,6 @@ struct LeaderboardView: View {
                             
                             Spacer()
                             
-                            // Badges
                             if !userEntry.badges.isEmpty {
                                 VStack(alignment: .trailing, spacing: 4) {
                                     ForEach(userEntry.badges.prefix(3), id: \.self) { badge in
@@ -64,6 +67,20 @@ struct LeaderboardView: View {
                                 }
                             }
                         }
+                        
+                        Button {
+                            editNameText = userEntry.username ?? ""
+                            showEditNameSheet = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "pencil")
+                                    .font(.caption)
+                                Text(userEntry.username?.isEmpty != false ? String(localized: "leaderboard.add_name") : String(localized: "leaderboard.edit_name"))
+                                    .font(.subheadline)
+                            }
+                            .foregroundColor(.blue)
+                        }
+                        .padding(.top, 4)
                     }
                     .padding()
                     .background(Color.blue.opacity(0.1))
@@ -115,6 +132,65 @@ struct LeaderboardView: View {
         }
         .refreshable {
             await viewModel.loadLeaderboard()
+        }
+        .sheet(isPresented: $showEditNameSheet) {
+            EditDisplayNameSheet(
+                displayName: $editNameText,
+                maxLength: displayNameMaxLength,
+                onSave: {
+                    Task {
+                        await viewModel.updateDisplayName(editNameText)
+                        showEditNameSheet = false
+                    }
+                },
+                onCancel: { showEditNameSheet = false }
+            )
+        }
+    }
+}
+
+// MARK: - Sheet para editar nome no ranking
+struct EditDisplayNameSheet: View {
+    @Binding var displayName: String
+    var maxLength: Int
+    var onSave: () -> Void
+    var onCancel: () -> Void
+    
+    private var trimmed: String { displayName.trimmingCharacters(in: .whitespacesAndNewlines) }
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                TextField(String(localized: "leaderboard.your_name_placeholder"), text: $displayName)
+                    .textFieldStyle(.roundedBorder)
+                    .padding(.horizontal)
+                    .autocapitalization(.words)
+                    .onChange(of: displayName) { _, newValue in
+                        if newValue.count > maxLength {
+                            displayName = String(newValue.prefix(maxLength))
+                        }
+                    }
+                Text("\(displayName.count)/\(maxLength)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            .padding(.top, 24)
+            .navigationTitle(String(localized: "leaderboard.edit_name_title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(String(localized: "comments.cancel")) {
+                        onCancel()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(String(localized: "comments.save")) {
+                        onSave()
+                    }
+                    .disabled(trimmed.isEmpty)
+                }
+            }
         }
     }
 }

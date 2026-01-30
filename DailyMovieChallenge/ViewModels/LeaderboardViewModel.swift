@@ -48,10 +48,12 @@ class LeaderboardViewModel: ObservableObject {
                        let score = data["score"] as? Int {
                         let accuracyRate = totalAnswers > 0 ? Double(correctAnswers) / Double(totalAnswers) * 100.0 : 0.0
                         let badges = (data["badges"] as? [String]) ?? []
+                        let displayName = (data["displayName"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let username = displayName?.isEmpty == false ? displayName : nil
                         
                         currentUserEntry = LeaderboardEntry(
                             id: userId,
-                            username: nil,
+                            username: username,
                             score: score,
                             streak: streak,
                             totalChallenges: totalChallenges,
@@ -67,5 +69,16 @@ class LeaderboardViewModel: ObservableObject {
         }
         
         isLoading = false
+    }
+    
+    /// Atualiza o nome/apelido do usuário no ranking e recarrega o leaderboard.
+    func updateDisplayName(_ displayName: String) async {
+        guard let userId = AuthService.shared.getCurrentUserId() else { return }
+        do {
+            try await firestoreService.updateUserDisplayName(userId: userId, displayName: displayName)
+            await loadLeaderboard()
+        } catch {
+            self.error = error
+        }
     }
 }

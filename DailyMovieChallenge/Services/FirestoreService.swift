@@ -42,6 +42,14 @@ class FirestoreService {
         ])
     }
     
+    /// Atualiza o nome/apelido do usuário no ranking (exibido no leaderboard).
+    func updateUserDisplayName(userId: String, displayName: String) async throws {
+        let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        try await db.collection("users").document(userId).updateData([
+            "displayName": trimmed
+        ])
+    }
+    
     func getUserStreak(userId: String) async throws -> Int {
         let document = try await db.collection("users").document(userId).getDocument()
         
@@ -411,10 +419,12 @@ class FirestoreService {
             
             let accuracyRate = totalAnswers > 0 ? Double(correctAnswers) / Double(totalAnswers) * 100.0 : 0.0
             let badges = (data["badges"] as? [String]) ?? []
+            let displayName = (data["displayName"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let username = displayName?.isEmpty == false ? displayName : nil
             
             return LeaderboardEntry(
                 id: document.documentID,
-                username: nil,
+                username: username,
                 score: score,
                 streak: streak,
                 totalChallenges: totalChallenges,

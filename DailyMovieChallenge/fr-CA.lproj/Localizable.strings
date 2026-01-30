@@ -50,6 +50,11 @@
 "leaderboard.player" = "Joueur";
 "leaderboard.position_format" = "#%d";
 "leaderboard.badges_more_format" = "+%d";
+"leaderboard.edit_name" = "Modifier le nom";
+"leaderboard.edit_name_title" = "Votre nom au classement";
+"leaderboard.your_name_placeholder" = "Votre nom ou pseudo";
+"leaderboard.add_name" = "Ajouter un nom";
+"leaderboard.add_name_prompt" = "Ajoutez votre nom au classement";
 
 /* Badges */
 "badge.7_days" = "7 jours";

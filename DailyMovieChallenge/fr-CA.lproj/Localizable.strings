@@ -1,0 +1,103 @@
+/* Home */
+"home.title" = "Défi du jour - Films";
+"home.streak_format" = "Série : %d";
+"home.leaderboard" = "Classement";
+"home.loading" = "Chargement du défi...";
+"home.play" = "Jouer";
+"home.error_loading" = "Erreur lors du chargement du défi";
+"home.retry" = "Réessayer";
+"home.no_challenge" = "Aucun défi disponible";
+"home.load_challenge" = "Charger le défi";
+
+/* Poster / Image */
+"poster.failed_to_load" = "Échec du chargement";
+"poster.no_poster" = "Aucune affiche disponible";
+"poster.invalid_url" = "URL invalide";
+
+/* Auth / ContentView */
+"auth.authenticating" = "Authentification...";
+"auth.error" = "Erreur : Authentification impossible";
+"auth.retry" = "Réessayer l'authentification";
+"auth.error_code" = "Code d'erreur : %d";
+
+/* Result */
+"result.correct" = "Correct !";
+"result.wrong" = "Incorrect !";
+"result.correct_answer" = "Bonne réponse :";
+"result.did_you_know" = "Le saviez-vous ?";
+"result.view_comments" = "Voir les commentaires";
+"result.all_questions_played" = "Toutes les questions jouées";
+"result.more_questions" = "Plus de questions (même film)";
+"result.new_movie_challenge" = "Nouveau défi de film";
+"result.back_to_home" = "Retour à l'accueil";
+
+/* Trivia */
+"trivia.submit" = "Envoyer";
+"trivia.challenge" = "Défi";
+
+/* Leaderboard */
+"leaderboard.title" = "Classement";
+"leaderboard.top_players" = "Meilleurs joueurs";
+"leaderboard.your_position" = "Votre position";
+"leaderboard.score_format" = "Score : %d";
+"leaderboard.streak_format" = "Série : %d 🔥";
+"leaderboard.accuracy_format" = "Précision : %.1f %%";
+"leaderboard.challenges_format" = "Défis : %d";
+"leaderboard.loading" = "Chargement du classement...";
+"leaderboard.no_players" = "Aucun joueur pour le moment";
+"leaderboard.done" = "Terminé";
+"leaderboard.you" = "(Vous)";
+"leaderboard.player" = "Joueur";
+"leaderboard.position_format" = "#%d";
+"leaderboard.badges_more_format" = "+%d";
+
+/* Badges */
+"badge.7_days" = "7 jours";
+"badge.30_days" = "30 jours";
+"badge.100_challenges" = "100 défis";
+"badge.80_accuracy" = "80 % de précision";
+
+/* Notification Settings */
+"settings.notification_preferences" = "Préférences de notification";
+"settings.preferences_footer" = "Choisissez les types de notifications que vous souhaitez recevoir. Les notifications du Défi du jour et du Rappel de série sont envoyées à des heures programmées.";
+"settings.daily_challenge" = "Notifications du défi du jour";
+"settings.streak_reminder" = "Rappel de série";
+"settings.achievements" = "Succès et badges";
+"settings.comment_notifications" = "Notifications de commentaires";
+"settings.enable" = "Activer";
+"settings.fcm_token" = "Jeton FCM";
+"settings.status" = "État";
+"settings.notifications_enabled" = "Notifications activées";
+"settings.notifications_disabled" = "Notifications désactivées";
+"settings.done" = "Terminé";
+"settings.navigation_title" = "Paramètres de notification";
+"settings.settings_saved" = "Paramètres enregistrés";
+"settings.preferences_saved" = "Vos préférences de notification ont été enregistrées.";
+"settings.ok" = "OK";
+"settings.error" = "Erreur";
+"settings.failed_to_load" = "Échec du chargement des paramètres : %@";
+"settings.failed_to_save" = "Échec de l'enregistrement des paramètres : %@";
+
+/* Comments */
+"comments.loading" = "Chargement des commentaires...";
+"comments.no_comments" = "Aucun commentaire pour le moment. Soyez le premier !";
+"comments.add_placeholder" = "Ajouter un commentaire...";
+"comments.send" = "Envoyer";
+"comments.back_to_home" = "Retour à l'accueil";
+"comments.navigation_title" = "Commentaires";
+"comments.unable_to_save" = "Impossible d'enregistrer le commentaire";
+"comments.try_again" = "Veuillez réessayer.";
+"comments.edit_placeholder" = "Modifier le commentaire";
+"comments.cancel" = "Annuler";
+"comments.save" = "Enregistrer";
+"comments.edited" = "(modifié)";
+"comments.like" = "J'aime";
+"comments.unlike" = "Je n'aime plus";
+"comments.edit" = "Modifier";
+"comments.delete" = "Supprimer";
+"comments.report" = "Signaler";
+"comments.delete_title" = "Supprimer le commentaire";
+"comments.report_title" = "Signaler le commentaire";
+"comments.delete_confirm" = "Êtes-vous sûr de vouloir supprimer ce commentaire ?";
+"comments.report_confirm" = "Êtes-vous sûr de vouloir signaler ce commentaire ?";
+"comments.badges_more_format" = "+%d";

@@ -165,7 +165,7 @@ struct TriviaView: View {
                         navigateToResult = true
                     }
                 } label: {
-                    Text("Submit")
+                    Text(String(localized: "trivia.submit"))
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -206,7 +206,7 @@ struct TriviaView: View {
                         .cornerRadius(6)
                         .clipped()
                     }
-                    Text("Challenge")
+                    Text(String(localized: "trivia.challenge"))
                         .font(.headline)
                 }
             }

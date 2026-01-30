@@ -18,45 +18,45 @@ struct NotificationSettingsView: View {
     var body: some View {
         List {
             Section {
-                Toggle("Daily Challenge Notifications", isOn: $settings.dailyChallenge)
+                Toggle(String(localized: "settings.daily_challenge"), isOn: $settings.dailyChallenge)
                     .onChange(of: settings.dailyChallenge) { oldValue, newValue in
                         saveSettings()
                     }
                 
-                Toggle("Streak Reminder", isOn: $settings.streakReminder)
+                Toggle(String(localized: "settings.streak_reminder"), isOn: $settings.streakReminder)
                     .onChange(of: settings.streakReminder) { oldValue, newValue in
                         saveSettings()
                     }
                 
-                Toggle("Achievements & Badges", isOn: $settings.achievements)
+                Toggle(String(localized: "settings.achievements"), isOn: $settings.achievements)
                     .onChange(of: settings.achievements) { oldValue, newValue in
                         saveSettings()
                     }
                 
-                Toggle("Comment Notifications", isOn: $settings.comments)
+                Toggle(String(localized: "settings.comment_notifications"), isOn: $settings.comments)
                     .onChange(of: settings.comments) { oldValue, newValue in
                         saveSettings()
                     }
             } header: {
-                Text("Notification Preferences")
+                Text(String(localized: "settings.notification_preferences"))
             } footer: {
-                Text("Choose which types of notifications you want to receive. Daily Challenge and Streak Reminder notifications are sent at scheduled times.")
+                Text(String(localized: "settings.preferences_footer"))
             }
             
             Section {
                 HStack {
                     if notificationService.isAuthorized {
-                        Label("Notifications Enabled", systemImage: "checkmark.circle.fill")
+                        Label(String(localized: "settings.notifications_enabled"), systemImage: "checkmark.circle.fill")
                             .foregroundColor(.green)
                     } else {
-                        Label("Notifications Disabled", systemImage: "xmark.circle.fill")
+                        Label(String(localized: "settings.notifications_disabled"), systemImage: "xmark.circle.fill")
                             .foregroundColor(.red)
                     }
                     
                     Spacer()
                     
                     if !notificationService.isAuthorized {
-                        Button("Enable") {
+                        Button(String(localized: "settings.enable")) {
                             Task {
                                 _ = await notificationService.requestAuthorization()
                             }
@@ -67,7 +67,7 @@ struct NotificationSettingsView: View {
                 
                 if let fcmToken = notificationService.fcmToken {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("FCM Token")
+                        Text(String(localized: "settings.fcm_token"))
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Text(fcmToken)
@@ -77,14 +77,14 @@ struct NotificationSettingsView: View {
                     }
                 }
             } header: {
-                Text("Status")
+                Text(String(localized: "settings.status"))
             }
         }
-        .navigationTitle("Notification Settings")
+        .navigationTitle(String(localized: "settings.navigation_title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Done") {
+                Button(String(localized: "settings.done")) {
                     dismiss()
                 }
             }
@@ -92,16 +92,16 @@ struct NotificationSettingsView: View {
         .task {
             await loadSettings()
         }
-        .alert("Settings Saved", isPresented: $showSuccessAlert) {
-            Button("OK", role: .cancel) { }
+        .alert(String(localized: "settings.settings_saved"), isPresented: $showSuccessAlert) {
+            Button(String(localized: "settings.ok"), role: .cancel) { }
         } message: {
-            Text("Your notification preferences have been saved.")
+            Text(String(localized: "settings.preferences_saved"))
         }
-        .alert("Error", isPresented: Binding(
+        .alert(String(localized: "settings.error"), isPresented: Binding(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
         )) {
-            Button("OK", role: .cancel) {
+            Button(String(localized: "settings.ok"), role: .cancel) {
                 errorMessage = nil
             }
         } message: {
@@ -118,7 +118,7 @@ struct NotificationSettingsView: View {
         do {
             settings = try await notificationService.getNotificationSettings()
         } catch {
-            errorMessage = "Failed to load settings: \(error.localizedDescription)"
+            errorMessage = String(format: String(localized: "settings.failed_to_load"), error.localizedDescription)
             print("❌ [NotificationSettingsView] Error loading settings: \(error)")
         }
         
@@ -134,7 +134,7 @@ struct NotificationSettingsView: View {
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = "Failed to save settings: \(error.localizedDescription)"
+                    errorMessage = String(format: String(localized: "settings.failed_to_save"), error.localizedDescription)
                 }
                 print("❌ [NotificationSettingsView] Error saving settings: \(error)")
             }

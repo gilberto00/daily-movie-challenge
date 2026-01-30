@@ -33,13 +33,13 @@ struct MoviePosterImageView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "photo")
                         .font(.largeTitle)
-                    Text("Failed to load")
+                    Text(String(localized: "poster.failed_to_load"))
                         .font(.caption)
                     Text(error.localizedDescription)
                         .font(.caption2)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                    Button("Retry") {
+                    Button(String(localized: "home.retry")) {
                         loadImage()
                     }
                     .font(.caption)
@@ -58,7 +58,7 @@ struct MoviePosterImageView: View {
                     } else {
                         Image(systemName: "photo")
                             .font(.largeTitle)
-                        Text(posterUrl == nil || posterUrl!.isEmpty ? "No poster available" : "Invalid URL")
+                        Text(posterUrl == nil || posterUrl!.isEmpty ? String(localized: "poster.no_poster") : String(localized: "poster.invalid_url"))
                             .font(.caption)
                     }
                 }
@@ -183,7 +183,7 @@ struct HomeView: View {
         ScrollView {
             VStack(spacing: 24) {
                 // Title
-                Text("Daily Movie Challenge")
+                Text(String(localized: "home.title"))
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top)
@@ -192,7 +192,7 @@ struct HomeView: View {
                 HStack {
                     Image(systemName: "flame.fill")
                         .foregroundColor(.orange)
-                    Text("Streak: \(challengeViewModel.userStreak)")
+                    Text(String(format: String(localized: "home.streak_format"), challengeViewModel.userStreak))
                         .font(.headline)
                     
                     Spacer()
@@ -203,7 +203,7 @@ struct HomeView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "trophy.fill")
                                 .foregroundColor(.orange)
-                            Text("Leaderboard")
+                            Text(String(localized: "home.leaderboard"))
                                 .font(.subheadline)
                                 .foregroundColor(.orange)
                         }
@@ -221,7 +221,7 @@ struct HomeView: View {
                 .cornerRadius(12)
                 
                 if challengeViewModel.isLoading {
-                    ProgressView("Loading challenge...")
+                    ProgressView(String(localized: "home.loading"))
                         .padding()
                 } else if let challenge = challengeViewModel.challenge {
                     MoviePosterImageView(posterUrl: challenge.posterUrl, movieTitle: challenge.title)
@@ -236,7 +236,7 @@ struct HomeView: View {
                     Button {
                         navigationPath.append(NavigationDestination.trivia)
                     } label: {
-                        Text("Play")
+                        Text(String(localized: "home.play"))
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -247,7 +247,7 @@ struct HomeView: View {
                     .padding(.horizontal)
                 } else if let error = challengeViewModel.error {
                     VStack(spacing: 16) {
-                        Text("Error loading challenge")
+                        Text(String(localized: "home.error_loading"))
                             .font(.headline)
                         
                         Text(error.localizedDescription)
@@ -255,7 +255,7 @@ struct HomeView: View {
                             .foregroundColor(.red)
                             .multilineTextAlignment(.center)
                         
-                        Button("Retry") {
+                        Button(String(localized: "home.retry")) {
                             Task {
                                 await challengeViewModel.loadDailyChallenge()
                             }
@@ -265,10 +265,10 @@ struct HomeView: View {
                     .padding()
                 } else {
                     VStack(spacing: 12) {
-                        Text("No challenge available")
+                        Text(String(localized: "home.no_challenge"))
                             .font(.headline)
                         
-                        Button("Load Challenge") {
+                        Button(String(localized: "home.load_challenge")) {
                             Task {
                                 await challengeViewModel.loadDailyChallenge()
                             }

@@ -40,7 +40,7 @@ struct ResultView: View {
                     .animation(.spring(response: 0.6, dampingFraction: 0.7), value: showResult)
                 
                 // Result Message com animação
-                Text(result.isCorrect ? "Correct!" : "Wrong!")
+                Text(result.isCorrect ? String(localized: "result.correct") : String(localized: "result.wrong"))
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(result.isCorrect ? .green : .red)
@@ -51,7 +51,7 @@ struct ResultView: View {
                 // Correct Answer (if wrong)
                 if !result.isCorrect {
                     VStack(spacing: 8) {
-                        Text("Correct Answer:")
+                        Text(String(localized: "result.correct_answer"))
                             .font(.headline)
                             .foregroundColor(.secondary)
                         Text(result.correctAnswer)
@@ -65,7 +65,7 @@ struct ResultView: View {
                 
                 // Curiosity
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Did you know?")
+                    Text(String(localized: "result.did_you_know"))
                         .font(.headline)
                         .foregroundColor(.secondary)
                     Text(result.curiosity)
@@ -81,7 +81,7 @@ struct ResultView: View {
                     showCommentsSheet = true
                 } label: {
                     HStack {
-                        Text("View Comments")
+                        Text(String(localized: "result.view_comments"))
                             .font(.headline)
                             .foregroundColor(.blue)
                         
@@ -124,7 +124,7 @@ struct ResultView: View {
                 } label: {
                     HStack {
                         Image(systemName: allQuestionsPlayed ? "checkmark.circle.fill" : "questionmark.circle.fill")
-                        Text(allQuestionsPlayed ? "All Questions Played" : "More Questions (Same Movie)")
+                        Text(allQuestionsPlayed ? String(localized: "result.all_questions_played") : String(localized: "result.more_questions"))
                             .font(.headline)
                         Spacer()
                         if isLoadingExtra {
@@ -206,7 +206,7 @@ struct ResultView: View {
                 } label: {
                     HStack {
                         Image(systemName: "film.fill")
-                        Text("New Movie Challenge")
+                        Text(String(localized: "result.new_movie_challenge"))
                             .font(.headline)
                         Spacer()
                         if isLoadingExtra {
@@ -227,7 +227,7 @@ struct ResultView: View {
                     print("🔄 [ResultView] Back to Home button pressionado")
                     onBackToHome()
                 } label: {
-                    Text("Back to Home")
+                    Text(String(localized: "result.back_to_home"))
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)

@@ -2,19 +2,30 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { fetchPopularMovie, fetchMovieDetails, getPosterUrl } from './utils/tmdb';
 import { generateYearQuestion, generateCuriosity, generateRandomQuestion } from './utils/questionGenerator';
+import { normalizeLang } from './utils/translations';
 
 admin.initializeApp();
 
+/** Idioma da requisição: query.lang ou Accept-Language (primeiro preferido). */
+function getLangFromRequest(req: functions.https.Request): string {
+  const queryLang = req.query.lang as string | undefined;
+  if (queryLang) return normalizeLang(queryLang);
+  const accept = req.get('Accept-Language');
+  if (accept) {
+    const first = accept.split(',')[0]?.trim().replace('_', '-');
+    return normalizeLang(first);
+  }
+  return normalizeLang(undefined);
+}
+
 /**
  * Retorna o desafio do dia (ou gera se não existir)
- * GET /getDailyChallenge?date=YYYY-MM-DD (opcional, default: dia atual)
- * Um único desafio por dia; não muda durante o dia.
+ * GET /getDailyChallenge?date=YYYY-MM-DD&lang=pt-BR (lang opcional; usa idioma do sistema no app)
  */
 export const getDailyChallenge = functions
   .region('us-central1')
   .https
   .onRequest(async (req, res) => {
-    // CORS headers
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type');
@@ -25,25 +36,38 @@ export const getDailyChallenge = functions
     }
 
     try {
-      // Obter data (dia atual ou parâmetro YYYY-MM-DD)
       const dateParam = req.query.date as string | undefined;
       const date = dateParam || getTodayString();
+      const lang = getLangFromRequest(req);
 
       const db = admin.firestore();
       const challengeRef = db.collection('dailyChallenges').doc(date);
 
-      // Verificar se já existe
       const existingDoc = await challengeRef.get();
       if (existingDoc.exists) {
-        const data = existingDoc.data();
+        const data = existingDoc.data()!;
+        // Se idioma não for inglês, traduzir pergunta e curiosidade (opções/correctAnswer permanecem)
+        if (lang !== 'en') {
+          const movie = await fetchMovieDetails(data.movieId);
+          if (movie) {
+            const questionData = generateYearQuestion(movie, lang as 'pt-BR' | 'fr-CA');
+            const curiosity = generateCuriosity(movie, lang as 'pt-BR' | 'fr-CA');
+            res.json({
+              ...data,
+              question: questionData.question,
+              curiosity,
+            });
+            return;
+          }
+        }
         res.json(data);
         return;
       }
 
-      // Gerar novo challenge
+      // Gerar novo challenge (armazenar em inglês; resposta traduzida ao devolver se lang !== en)
       const movie = await fetchPopularMovie();
-      const questionData = generateYearQuestion(movie);
-      const curiosity = generateCuriosity(movie);
+      const questionData = generateYearQuestion(movie, 'en');
+      const curiosity = generateCuriosity(movie, 'en');
 
       const challenge = {
         id: date,
@@ -58,11 +82,15 @@ export const getDailyChallenge = functions
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
-      // Salvar no Firestore
       await challengeRef.set(challenge);
 
-      // Retornar
-      res.json(challenge);
+      if (lang !== 'en') {
+        const questionDataLang = generateYearQuestion(movie, lang as 'pt-BR' | 'fr-CA');
+        const curiosityLang = generateCuriosity(movie, lang as 'pt-BR' | 'fr-CA');
+        res.json({ ...challenge, question: questionDataLang.question, curiosity: curiosityLang });
+      } else {
+        res.json(challenge);
+      }
     } catch (error) {
       console.error('Error in getDailyChallenge:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -102,10 +130,9 @@ export const getExtraQuestion = functions
         return;
       }
 
-      // Gerar pergunta diferente (que não foi jogada ainda)
-      // A função generateRandomQuestion já evita tipos excluídos
-      const questionData = generateRandomQuestion(movie, excludeTypes);
-      const curiosity = generateCuriosity(movie);
+      const lang = getLangFromRequest(req);
+      const questionData = generateRandomQuestion(movie, excludeTypes, lang as 'en' | 'pt-BR' | 'fr-CA');
+      const curiosity = generateCuriosity(movie, lang as 'en' | 'pt-BR' | 'fr-CA');
       
       // Gerar ID único baseado em timestamp e random string para evitar duplicatas
       const uniqueId = `${movieId}-${questionData.questionType}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -146,10 +173,10 @@ export const getNewMovieChallenge = functions
     }
 
     try {
-      // Gerar novo filme e pergunta
+      const lang = getLangFromRequest(req);
       const movie = await fetchPopularMovie();
-      const questionData = generateYearQuestion(movie);
-      const curiosity = generateCuriosity(movie);
+      const questionData = generateYearQuestion(movie, lang as 'en' | 'pt-BR' | 'fr-CA');
+      const curiosity = generateCuriosity(movie, lang as 'en' | 'pt-BR' | 'fr-CA');
 
       const challenge = {
         id: `${movie.id}-${Date.now()}`,

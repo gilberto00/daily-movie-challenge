@@ -1,0 +1,103 @@
+/* Home */
+"home.title" = "Daily Movie Challenge";
+"home.streak_format" = "Streak: %d";
+"home.leaderboard" = "Leaderboard";
+"home.loading" = "Loading challenge...";
+"home.play" = "Play";
+"home.error_loading" = "Error loading challenge";
+"home.retry" = "Retry";
+"home.no_challenge" = "No challenge available";
+"home.load_challenge" = "Load Challenge";
+
+/* Poster / Image */
+"poster.failed_to_load" = "Failed to load";
+"poster.no_poster" = "No poster available";
+"poster.invalid_url" = "Invalid URL";
+
+/* Auth / ContentView */
+"auth.authenticating" = "Authenticating...";
+"auth.error" = "Error: Could not authenticate";
+"auth.retry" = "Retry Authentication";
+"auth.error_code" = "Error Code: %d";
+
+/* Result */
+"result.correct" = "Correct!";
+"result.wrong" = "Wrong!";
+"result.correct_answer" = "Correct Answer:";
+"result.did_you_know" = "Did you know?";
+"result.view_comments" = "View Comments";
+"result.all_questions_played" = "All Questions Played";
+"result.more_questions" = "More Questions (Same Movie)";
+"result.new_movie_challenge" = "New Movie Challenge";
+"result.back_to_home" = "Back to Home";
+
+/* Trivia */
+"trivia.submit" = "Submit";
+"trivia.challenge" = "Challenge";
+
+/* Leaderboard */
+"leaderboard.title" = "Leaderboard";
+"leaderboard.top_players" = "Top Players";
+"leaderboard.your_position" = "Your Position";
+"leaderboard.score_format" = "Score: %d";
+"leaderboard.streak_format" = "Streak: %d 🔥";
+"leaderboard.accuracy_format" = "Accuracy: %.1f%%";
+"leaderboard.challenges_format" = "Challenges: %d";
+"leaderboard.loading" = "Loading leaderboard...";
+"leaderboard.no_players" = "No players yet";
+"leaderboard.done" = "Done";
+"leaderboard.you" = "(You)";
+"leaderboard.player" = "Player";
+"leaderboard.position_format" = "#%d";
+"leaderboard.badges_more_format" = "+%d";
+
+/* Badges */
+"badge.7_days" = "7 Days";
+"badge.30_days" = "30 Days";
+"badge.100_challenges" = "100 Challenges";
+"badge.80_accuracy" = "80% Accuracy";
+
+/* Notification Settings */
+"settings.notification_preferences" = "Notification Preferences";
+"settings.preferences_footer" = "Choose which types of notifications you want to receive. Daily Challenge and Streak Reminder notifications are sent at scheduled times.";
+"settings.daily_challenge" = "Daily Challenge Notifications";
+"settings.streak_reminder" = "Streak Reminder";
+"settings.achievements" = "Achievements & Badges";
+"settings.comment_notifications" = "Comment Notifications";
+"settings.enable" = "Enable";
+"settings.fcm_token" = "FCM Token";
+"settings.status" = "Status";
+"settings.notifications_enabled" = "Notifications Enabled";
+"settings.notifications_disabled" = "Notifications Disabled";
+"settings.done" = "Done";
+"settings.navigation_title" = "Notification Settings";
+"settings.settings_saved" = "Settings Saved";
+"settings.preferences_saved" = "Your notification preferences have been saved.";
+"settings.ok" = "OK";
+"settings.error" = "Error";
+"settings.failed_to_load" = "Failed to load settings: %@";
+"settings.failed_to_save" = "Failed to save settings: %@";
+
+/* Comments */
+"comments.loading" = "Loading comments...";
+"comments.no_comments" = "No comments yet. Be the first!";
+"comments.add_placeholder" = "Add a comment...";
+"comments.send" = "Send";
+"comments.back_to_home" = "Back to Home";
+"comments.navigation_title" = "Comments";
+"comments.unable_to_save" = "Unable to save comment";
+"comments.try_again" = "Please try again.";
+"comments.edit_placeholder" = "Edit comment";
+"comments.cancel" = "Cancel";
+"comments.save" = "Save";
+"comments.edited" = "(edited)";
+"comments.like" = "Like";
+"comments.unlike" = "Unlike";
+"comments.edit" = "Edit";
+"comments.delete" = "Delete";
+"comments.report" = "Report";
+"comments.delete_title" = "Delete Comment";
+"comments.report_title" = "Report Comment";
+"comments.delete_confirm" = "Are you sure you want to delete this comment?";
+"comments.report_confirm" = "Are you sure you want to report this comment?";
+"comments.badges_more_format" = "+%d";

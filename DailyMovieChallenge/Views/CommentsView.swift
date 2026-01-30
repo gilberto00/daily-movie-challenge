@@ -17,10 +17,10 @@ struct CommentsView: View {
     var body: some View {
         VStack(spacing: 12) {
             if viewModel.isLoading {
-                ProgressView("Loading comments...")
+                ProgressView(String(localized: "comments.loading"))
                     .padding(.top)
             } else if viewModel.comments.isEmpty {
-                Text("No comments yet. Be the first!")
+                Text(String(localized: "comments.no_comments"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .padding(.top)
@@ -57,7 +57,7 @@ struct CommentsView: View {
             Divider()
 
             HStack(spacing: 8) {
-                TextField("Add a comment...", text: $viewModel.newCommentText, axis: .vertical)
+                TextField(String(localized: "comments.add_placeholder"), text: $viewModel.newCommentText, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .lineLimit(1...3)
 
@@ -76,7 +76,7 @@ struct CommentsView: View {
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
                     } else {
-                        Text("Send")
+                        Text(String(localized: "comments.send"))
                             .font(.headline)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
@@ -98,7 +98,7 @@ struct CommentsView: View {
             Button {
                 onBackToHome()
             } label: {
-                Text("Back to Home")
+                Text(String(localized: "comments.back_to_home"))
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -109,7 +109,7 @@ struct CommentsView: View {
             .padding(.horizontal)
             .padding(.bottom, 16)
         }
-        .navigationTitle("Comments")
+        .navigationTitle(String(localized: "comments.navigation_title"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await viewModel.loadComments(challengeId: challengeId)
@@ -117,10 +117,10 @@ struct CommentsView: View {
                 showError = true
             }
         }
-        .alert("Unable to save comment", isPresented: $showError, actions: {
-            Button("OK", role: .cancel) {}
+        .alert(String(localized: "comments.unable_to_save"), isPresented: $showError, actions: {
+            Button(String(localized: "settings.ok"), role: .cancel) {}
         }, message: {
-            Text(viewModel.error?.localizedDescription ?? "Please try again.")
+            Text(viewModel.error?.localizedDescription ?? String(localized: "comments.try_again"))
         })
     }
 
@@ -146,12 +146,12 @@ struct CommentRowView: View {
                 // Conteúdo do comentário
                 VStack(alignment: .leading, spacing: 4) {
                     if isEditing {
-                        TextField("Edit comment", text: $editText, axis: .vertical)
+                        TextField(String(localized: "comments.edit_placeholder"), text: $editText, axis: .vertical)
                             .textFieldStyle(.roundedBorder)
                             .lineLimit(1...4)
                         
                         HStack {
-                            Button("Cancel") {
+                            Button(String(localized: "comments.cancel")) {
                                 isEditing = false
                                 editText = comment.text
                             }
@@ -160,7 +160,7 @@ struct CommentRowView: View {
                             
                             Spacer()
                             
-                            Button("Save") {
+                            Button(String(localized: "comments.save")) {
                                 onEdit(editText)
                                 isEditing = false
                             }
@@ -178,7 +178,7 @@ struct CommentRowView: View {
                                 .foregroundColor(.secondary)
                             
                             if comment.editedAt != nil {
-                                Text("(edited)")
+                                Text(String(localized: "comments.edited"))
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
@@ -196,32 +196,29 @@ struct CommentRowView: View {
                             onLike()
                         } label: {
                             Label(
-                                comment.isLikedByCurrentUser ? "Unlike" : "Like",
+                                comment.isLikedByCurrentUser ? String(localized: "comments.unlike") : String(localized: "comments.like"),
                                 systemImage: comment.isLikedByCurrentUser ? "heart.fill" : "heart"
                             )
                         }
                         
                         if isOwnComment {
-                            // Editar (apenas próprio)
                             Button {
                                 editText = comment.text
                                 isEditing = true
                             } label: {
-                                Label("Edit", systemImage: "pencil")
+                                Label(String(localized: "comments.edit"), systemImage: "pencil")
                             }
                             
-                            // Excluir (apenas próprio)
                             Button(role: .destructive) {
                                 showDeleteAlert = true
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label(String(localized: "comments.delete"), systemImage: "trash")
                             }
                         } else {
-                            // Report (apenas de outros)
                             Button(role: .destructive) {
                                 showReportAlert = true
                             } label: {
-                                Label("Report", systemImage: "flag")
+                                Label(String(localized: "comments.report"), systemImage: "flag")
                             }
                         }
                     } label: {
@@ -255,21 +252,21 @@ struct CommentRowView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 4)
-        .alert("Delete Comment", isPresented: $showDeleteAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Delete", role: .destructive) {
+        .alert(String(localized: "comments.delete_title"), isPresented: $showDeleteAlert) {
+            Button(String(localized: "comments.cancel"), role: .cancel) {}
+            Button(String(localized: "comments.delete"), role: .destructive) {
                 onDelete()
             }
         } message: {
-            Text("Are you sure you want to delete this comment?")
+            Text(String(localized: "comments.delete_confirm"))
         }
-        .alert("Report Comment", isPresented: $showReportAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Report", role: .destructive) {
+        .alert(String(localized: "comments.report_title"), isPresented: $showReportAlert) {
+            Button(String(localized: "comments.cancel"), role: .cancel) {}
+            Button(String(localized: "comments.report"), role: .destructive) {
                 onReport()
             }
         } message: {
-            Text("Are you sure you want to report this comment?")
+            Text(String(localized: "comments.report_confirm"))
         }
         .onAppear {
             editText = comment.text

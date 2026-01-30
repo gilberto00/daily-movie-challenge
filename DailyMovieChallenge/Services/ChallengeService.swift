@@ -22,10 +22,16 @@ class ChallengeService {
         return formatter.string(from: Date())
     }
     
+    /// Idioma do sistema para o backend (ex.: pt-BR, fr-CA, en)
+    static func systemLanguageCode() -> String {
+        let id = Locale.current.identifier
+        return id.replacingOccurrences(of: "_", with: "-")
+    }
+    
     func fetchDailyChallenge() async throws -> DailyChallenge {
-        // Usar data de hoje (YYYY-MM-DD) para um único desafio por dia
         let today = Self.todayDateString()
-        let urlString = "\(baseURL)/getDailyChallenge?date=\(today)"
+        let lang = Self.systemLanguageCode()
+        let urlString = "\(baseURL)/getDailyChallenge?date=\(today)&lang=\(lang)"
         print("🔍 [ChallengeService] Fetching challenge from: \(urlString)")
         
         guard let url = URL(string: urlString) else {
@@ -91,7 +97,8 @@ class ChallengeService {
     
     func fetchExtraQuestion(movieId: Int, excludeTypes: [String] = []) async throws -> DailyChallenge {
         let excludeTypesString = excludeTypes.joined(separator: ",")
-        let urlString = "\(baseURL)/getExtraQuestion?movieId=\(movieId)&excludeTypes=\(excludeTypesString)"
+        let lang = Self.systemLanguageCode()
+        let urlString = "\(baseURL)/getExtraQuestion?movieId=\(movieId)&excludeTypes=\(excludeTypesString)&lang=\(lang)"
         
         guard let url = URL(string: urlString) else {
             throw ChallengeError.networkError
@@ -114,7 +121,8 @@ class ChallengeService {
     }
     
     func fetchNewMovieChallenge() async throws -> DailyChallenge {
-        let urlString = "\(baseURL)/getNewMovieChallenge"
+        let lang = Self.systemLanguageCode()
+        let urlString = "\(baseURL)/getNewMovieChallenge?lang=\(lang)"
         
         guard let url = URL(string: urlString) else {
             throw ChallengeError.networkError

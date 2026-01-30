@@ -16,11 +16,11 @@ struct LeaderboardView: View {
             VStack(spacing: 20) {
                 // Header
                 VStack(spacing: 8) {
-                    Text("Leaderboard")
+                    Text(String(localized: "leaderboard.title"))
                         .font(.largeTitle)
                         .fontWeight(.bold)
                     
-                    Text("Top Players")
+                    Text(String(localized: "leaderboard.top_players"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -29,7 +29,7 @@ struct LeaderboardView: View {
                 // User's Position Card
                 if let userEntry = viewModel.currentUserEntry {
                     VStack(spacing: 8) {
-                        Text("Your Position")
+                        Text(String(localized: "leaderboard.your_position"))
                             .font(.caption)
                             .foregroundColor(.secondary)
                         
@@ -42,13 +42,13 @@ struct LeaderboardView: View {
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Score: \(userEntry.score)")
+                                Text(String(format: String(localized: "leaderboard.score_format"), userEntry.score))
                                     .font(.headline)
-                                Text("Streak: \(userEntry.streak) 🔥")
+                                Text(String(format: String(localized: "leaderboard.streak_format"), userEntry.streak))
                                     .font(.subheadline)
-                                Text("Accuracy: \(userEntry.accuracyRate, specifier: "%.1f")%")
+                                Text(String(format: String(localized: "leaderboard.accuracy_format"), userEntry.accuracyRate))
                                     .font(.subheadline)
-                                Text("Challenges: \(userEntry.totalChallenges)")
+                                Text(String(format: String(localized: "leaderboard.challenges_format"), userEntry.totalChallenges))
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -73,10 +73,10 @@ struct LeaderboardView: View {
                 
                 // Leaderboard List
                 if viewModel.isLoading {
-                    ProgressView("Loading leaderboard...")
+                    ProgressView(String(localized: "leaderboard.loading"))
                         .padding()
                 } else if viewModel.entries.isEmpty {
-                    Text("No players yet")
+                    Text(String(localized: "leaderboard.no_players"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .padding()
@@ -105,7 +105,7 @@ struct LeaderboardView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Done") {
+                Button(String(localized: "leaderboard.done")) {
                     dismiss()
                 }
             }
@@ -127,7 +127,7 @@ struct LeaderboardRowView: View {
     var body: some View {
         HStack(spacing: 16) {
             // Position/Rank
-            Text("#\(position)")
+            Text(String(format: String(localized: "leaderboard.position_format"), position))
                 .font(.title3)
                 .fontWeight(.bold)
                 .foregroundColor(position <= 3 ? .orange : .secondary)
@@ -155,12 +155,12 @@ struct LeaderboardRowView: View {
             // User info
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(entry.username ?? "Player")
+                    Text(entry.username ?? String(localized: "leaderboard.player"))
                         .font(.headline)
                         .foregroundColor(isCurrentUser ? .blue : .primary)
                     
                     if isCurrentUser {
-                        Text("(You)")
+                        Text(String(localized: "leaderboard.you"))
                             .font(.caption)
                             .foregroundColor(.blue)
                     }
@@ -190,7 +190,7 @@ struct LeaderboardRowView: View {
                         BadgeView(badgeName: badge)
                     }
                     if entry.badges.count > 2 {
-                        Text("+\(entry.badges.count - 2)")
+                        Text(String(format: String(localized: "leaderboard.badges_more_format"), entry.badges.count - 2))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
@@ -209,13 +209,13 @@ struct BadgeView: View {
     var badgeInfo: (emoji: String, name: String) {
         switch badgeName {
         case "streak_7":
-            return ("🔥", "7 Days")
+            return ("🔥", String(localized: "badge.7_days"))
         case "streak_30":
-            return ("🔥🔥", "30 Days")
+            return ("🔥🔥", String(localized: "badge.30_days"))
         case "challenges_100":
-            return ("🎯", "100 Challenges")
+            return ("🎯", String(localized: "badge.100_challenges"))
         case "accuracy_80":
-            return ("⭐", "80% Accuracy")
+            return ("⭐", String(localized: "badge.80_accuracy"))
         default:
             return ("🏆", badgeName)
         }

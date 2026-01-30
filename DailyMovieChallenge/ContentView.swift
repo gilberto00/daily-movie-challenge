@@ -17,7 +17,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             if authViewModel.isLoading {
-                ProgressView("Authenticating...")
+                ProgressView(String(localized: "auth.authenticating"))
                     .onAppear {
                         print("🔄 [ContentView] Showing authentication loading")
                     }
@@ -34,7 +34,7 @@ struct ContentView: View {
                     }
             } else {
                 VStack(spacing: 12) {
-                    Text("Error: Could not authenticate")
+                    Text(String(localized: "auth.error"))
                         .font(.headline)
                     
                     if let error = authViewModel.error {
@@ -45,14 +45,14 @@ struct ContentView: View {
                         
                         #if DEBUG
                         if let nsError = error as NSError? {
-                            Text("Error Code: \(nsError.code)")
+                            Text(String(format: String(localized: "auth.error_code"), nsError.code))
                                 .font(.caption2)
                                 .foregroundColor(.gray)
                         }
                         #endif
                     }
                     
-                    Button("Retry Authentication") {
+                    Button(String(localized: "auth.retry")) {
                         print("🔄 [ContentView] Retry authentication button tapped")
                         Task {
                             await authViewModel.authenticate()

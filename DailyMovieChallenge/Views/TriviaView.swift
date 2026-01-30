@@ -158,6 +158,8 @@ struct TriviaView: View {
                 Divider()
                 
                 Button {
+                    let impact = UIImpactFeedbackGenerator(style: .medium)
+                    impact.impactOccurred()
                     Task {
                         guard let selected = gameViewModel.selectedAnswer else { return }
                         let challengeResult = await challengeViewModel.submitAnswer(selected)

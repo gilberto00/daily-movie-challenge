@@ -19,6 +19,8 @@ struct ResultView: View {
     @State private var commentsCount: Int = 0
     @State private var isLoadingCommentsCount = false
     @State private var showResult = false
+    @State private var shakePhase: CGFloat = 0
+    @State private var resultIconScale: CGFloat = 1.0
     @State private var isLoadingExtra = false
     @State private var navigateToExtraQuestion = false
     
@@ -28,16 +30,19 @@ struct ResultView: View {
     }
     
     var body: some View {
+        ZStack {
         ScrollView {
             VStack(spacing: 24) {
-                // Result Icon com animação
+                // Result Icon com animação (bounce no acerto, shake no erro)
                 Image(systemName: result.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .resizable()
                     .frame(width: 80, height: 80)
                     .foregroundColor(result.isCorrect ? .green : .red)
-                    .scaleEffect(showResult ? 1.0 : 0.5)
+                    .scaleEffect(showResult ? resultIconScale : 0.5)
                     .opacity(showResult ? 1.0 : 0.0)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.7), value: showResult)
+                    .offset(x: result.isCorrect ? 0 : sin(shakePhase * 2 * .pi) * 10)
+                    .animation(.spring(response: 0.5, dampingFraction: result.isCorrect ? 0.55 : 0.7), value: showResult)
+                    .animation(.linear(duration: 0.35), value: shakePhase)
                 
                 // Result Message com animação
                 Text(result.isCorrect ? String(localized: "result.correct") : String(localized: "result.wrong"))
@@ -238,14 +243,44 @@ struct ResultView: View {
             }
             .padding()
         }
+        .overlay {
+            if result.isCorrect && showResult {
+                ConfettiStreamersOverlay(isActive: true)
+                    .zIndex(1)
+            }
+        }
         .navigationTitle("Result")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            // Animar resultado ao aparecer
-            withAnimation {
-                showResult = true
+            // Haptic: sucesso no acerto, erro no incorreto
+            let feedback = UINotificationFeedbackGenerator()
+            feedback.prepare()
+            if result.isCorrect {
+                feedback.notificationOccurred(.success)
+            } else {
+                feedback.notificationOccurred(.error)
             }
-            // Carregar contagem de comentários ao aparecer
+            // Animar resultado ao aparecer
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) {
+                showResult = true
+                resultIconScale = 1.0
+            }
+            // Acerto: leve bounce (scale 1.0 -> 1.15 -> 1.0)
+            if result.isCorrect {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
+                    resultIconScale = 1.15
+                }
+                try? await Task.sleep(nanoseconds: 150_000_000)
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    resultIconScale = 1.0
+                }
+            } else {
+                // Erro: shake horizontal
+                withAnimation(.linear(duration: 0.35)) {
+                    shakePhase = 4
+                }
+            }
             await loadCommentsCount()
         }
         .sheet(isPresented: $showCommentsSheet) {
@@ -281,12 +316,12 @@ struct ResultView: View {
                 TriviaView(
                     challenge: challenge,
                     onBackToHome: {
-                        // Fechar ResultView e voltar para Home
                         onBackToHome()
                     }
                 )
                 .environmentObject(challengeViewModel)
             }
+        }
         }
     }
     

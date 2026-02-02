@@ -216,8 +216,8 @@ function getTodayString(): string {
 export const sendDailyChallengeNotification = functions
   .region('us-central1')
   .pubsub
-  .schedule('0 9 * * *') // 9h todo dia (horário UTC)
-  .timeZone('America/Sao_Paulo')
+  .schedule('0 9 * * *') // 9h todo dia (horário local)
+  .timeZone('America/Toronto')
   .onRun(async (context) => {
     try {
       const db = admin.firestore();
@@ -279,6 +279,13 @@ export const sendDailyChallengeNotification = functions
       const response = await messaging.sendEachForMulticast(message);
       console.log(`✅ Daily challenge notification sent to ${response.successCount} devices`);
       console.log(`❌ Failed: ${response.failureCount}`);
+      if (response.failureCount > 0) {
+        response.responses.forEach((resp, i) => {
+          if (!resp.success && resp.error) {
+            console.error(`  [${i}] token failed:`, resp.error.code, resp.error.message);
+          }
+        });
+      }
       
       return null;
     } catch (error) {
@@ -294,8 +301,8 @@ export const sendDailyChallengeNotification = functions
 export const sendStreakReminderNotification = functions
   .region('us-central1')
   .pubsub
-  .schedule('0 20 * * *') // 20h todo dia (horário UTC)
-  .timeZone('America/Sao_Paulo')
+  .schedule('0 20 * * *') // 20h todo dia (horário local)
+  .timeZone('America/Toronto')
   .onRun(async (context) => {
     try {
       const db = admin.firestore();

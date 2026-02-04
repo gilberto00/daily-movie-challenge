@@ -26,6 +26,10 @@
 "result.correct_answer" = "Resposta correta:";
 "result.did_you_know" = "Você sabia?";
 "result.view_comments" = "Ver comentários";
+"result.share_button" = "Compartilhar";
+"result.share_facebook_button" = "Compartilhar no Facebook";
+"result.share_message_correct" = "Acertei o desafio do Daily Movie Challenge hoje! Streak: %d";
+"result.share_message_incorrect" = "Joguei o desafio do Daily Movie Challenge hoje! Streak: %d";
 "result.all_questions_played" = "Todas as perguntas jogadas";
 "result.more_questions" = "Mais perguntas (mesmo filme)";
 "result.new_movie_challenge" = "Novo desafio de filme";

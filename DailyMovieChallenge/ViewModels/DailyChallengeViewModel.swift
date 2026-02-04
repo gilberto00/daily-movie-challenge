@@ -25,6 +25,10 @@ class DailyChallengeViewModel: ObservableObject {
     private var playedQuestionTextsByMovie: [Int: Set<String>] = [:]
     /// Se o desafio atual veio de loadDailyChallenge (streak só atualiza ao completar o desafio do dia)
     private var isCurrentChallengeDaily: Bool = false
+
+    var isDailyChallengeActive: Bool {
+        isCurrentChallengeDaily
+    }
     
     private let challengeService = ChallengeService.shared
     private let firestoreService = FirestoreService.shared

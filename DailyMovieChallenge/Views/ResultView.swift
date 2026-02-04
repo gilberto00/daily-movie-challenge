@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct ResultView: View {
     let result: ChallengeResult
@@ -14,6 +15,7 @@ struct ResultView: View {
     let onBackToHome: () -> Void
     @EnvironmentObject var challengeViewModel: DailyChallengeViewModel
     @Environment(\.dismiss) var dismiss
+    @Environment(\.openURL) var openURL
     @State private var showCommentsSheet = false
     @State private var shouldReturnToHome = false
     @State private var commentsCount: Int = 0
@@ -23,10 +25,29 @@ struct ResultView: View {
     @State private var resultIconScale: CGFloat = 1.0
     @State private var isLoadingExtra = false
     @State private var navigateToExtraQuestion = false
+    @State private var showShareSheet = false
     
     // Computed property para verificar se todas as perguntas foram jogadas
     private var allQuestionsPlayed: Bool {
         challengeViewModel.areAllQuestionsPlayed(for: movieId)
+    }
+
+    private var shareMessage: String {
+        let streak = max(challengeViewModel.userStreak, 0)
+        if result.isCorrect {
+            return String(format: String(localized: "result.share_message_correct"), streak)
+        }
+        return String(format: String(localized: "result.share_message_incorrect"), streak)
+    }
+
+    private var facebookShareURL: URL? {
+        let appStoreURL = "https://apps.apple.com/app/id6758586246"
+        var components = URLComponents(string: "https://www.facebook.com/sharer/sharer.php")
+        components?.queryItems = [
+            URLQueryItem(name: "u", value: appStoreURL),
+            URLQueryItem(name: "quote", value: shareMessage)
+        ]
+        return components?.url
     }
     
     var body: some View {
@@ -80,6 +101,45 @@ struct ResultView: View {
                 .padding()
                 .background(Color.blue.opacity(0.1))
                 .cornerRadius(12)
+
+                if challengeViewModel.isDailyChallengeActive {
+                    Button {
+                        showShareSheet = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "square.and.arrow.up")
+                            Text(String(localized: "result.share_button"))
+                                .font(.headline)
+                            Spacer()
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.orange)
+                        .cornerRadius(12)
+                    }
+                    .sheet(isPresented: $showShareSheet) {
+                        ActivityView(activityItems: [shareMessage])
+                    }
+
+                    Button {
+                        if let url = facebookShareURL {
+                            openURL(url)
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "f.circle.fill")
+                            Text(String(localized: "result.share_facebook_button"))
+                                .font(.headline)
+                            Spacer()
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(12)
+                    }
+                }
                 
                 // View Comments Button com contador
                 Button {
@@ -350,5 +410,16 @@ struct ResultView: View {
             onBackToHome: {}
         )
         .environmentObject(DailyChallengeViewModel())
+    }
+}
+
+private struct ActivityView: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
     }
 }

@@ -26,6 +26,10 @@
 "result.correct_answer" = "Correct Answer:";
 "result.did_you_know" = "Did you know?";
 "result.view_comments" = "View Comments";
+"result.share_button" = "Share";
+"result.share_facebook_button" = "Share on Facebook";
+"result.share_message_correct" = "I got today's Daily Movie Challenge right! Streak: %d";
+"result.share_message_incorrect" = "I played today's Daily Movie Challenge! Streak: %d";
 "result.all_questions_played" = "All Questions Played";
 "result.more_questions" = "More Questions (Same Movie)";
 "result.new_movie_challenge" = "New Movie Challenge";

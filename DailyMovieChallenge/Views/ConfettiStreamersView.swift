@@ -17,6 +17,7 @@ private struct ConfettiParticle: Identifiable {
     let drift: CGFloat
     let delay: CGFloat
     let rotationSpeed: Double
+    let depth: CGFloat
 }
 
 /// Uma serpentina: tira longa que cai com rotação.
@@ -30,6 +31,7 @@ private struct StreamerParticle: Identifiable {
     let drift: CGFloat
     let delay: CGFloat
     let rotationSpeed: Double
+    let depth: CGFloat
 }
 
 /// View de confetes e serpentinas caindo (para sucesso).
@@ -89,32 +91,36 @@ struct ConfettiStreamersView: View {
     private func generateParticles() {
         var c: [ConfettiParticle] = []
         for _ in 0..<55 {
+            let depth = CGFloat.random(in: 0.6...1.2)
             c.append(ConfettiParticle(
                 initialX: CGFloat.random(in: 0...1),
                 color: Self.colors.randomElement()!,
                 size: CGSize(
-                    width: CGFloat.random(in: 6...14),
-                    height: CGFloat.random(in: 6...12)
+                    width: CGFloat.random(in: 6...14) * depth,
+                    height: CGFloat.random(in: 6...12) * depth
                 ),
-                fallSpeed: CGFloat.random(in: 180...320),
-                drift: CGFloat.random(in: -40...40),
+                fallSpeed: CGFloat.random(in: 180...320) * depth,
+                drift: CGFloat.random(in: -40...40) * depth,
                 delay: CGFloat.random(in: 0...0.8),
-                rotationSpeed: Double.random(in: -3...3)
+                rotationSpeed: Double.random(in: -3...3) * Double(depth),
+                depth: depth
             ))
         }
         confetti = c
 
         var s: [StreamerParticle] = []
         for _ in 0..<12 {
+            let depth = CGFloat.random(in: 0.6...1.1)
             s.append(StreamerParticle(
                 initialX: CGFloat.random(in: 0...1),
                 color: Self.colors.randomElement()!,
-                width: CGFloat.random(in: 4...8),
-                height: CGFloat.random(in: 50...90),
-                fallSpeed: CGFloat.random(in: 120...220),
-                drift: CGFloat.random(in: -50...50),
+                width: CGFloat.random(in: 4...8) * depth,
+                height: CGFloat.random(in: 50...90) * depth,
+                fallSpeed: CGFloat.random(in: 120...220) * depth,
+                drift: CGFloat.random(in: -50...50) * depth,
                 delay: CGFloat.random(in: 0...0.5),
-                rotationSpeed: Double.random(in: -2.5...2.5)
+                rotationSpeed: Double.random(in: -2.5...2.5) * Double(depth),
+                depth: depth
             ))
         }
         streamers = s
@@ -133,6 +139,7 @@ struct ConfettiStreamersView: View {
             .fill(particle.color)
             .frame(width: particle.size.width, height: particle.size.height)
             .rotationEffect(rotation)
+            .opacity(Double(min(1.0, max(0.5, particle.depth))))
             .position(x: posX + x, y: posY)
     }
 
@@ -155,6 +162,7 @@ struct ConfettiStreamersView: View {
             )
             .frame(width: particle.width, height: particle.height)
             .rotationEffect(rotation)
+            .opacity(Double(min(1.0, max(0.45, particle.depth))))
             .position(x: posX + x, y: posY)
     }
 }

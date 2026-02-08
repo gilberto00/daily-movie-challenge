@@ -92,7 +92,32 @@ class NotificationService: NSObject, ObservableObject {
                 print("⚠️ [NotificationService] Error saving FCM token: \(error)")
             }
         } else {
-            print("⚠️ [NotificationService] User not authenticated, cannot save FCM token")
+            print("⚠️ [NotificationService] User not authenticated, cannot save FCM token (will retry when auth completes)")
+        }
+    }
+    
+    /// Tenta salvar o token FCM novamente (ex.: após autenticação). Usado para corrigir race condition onde o token chega antes do auth.
+    func saveTokenIfNeeded() async {
+        var token: String?
+        await MainActor.run {
+            token = self.fcmToken
+        }
+        if token == nil {
+            token = await withCheckedContinuation { continuation in
+                Messaging.messaging().token { t, error in
+                    if let error = error {
+                        print("⚠️ [NotificationService] Error fetching token for retry: \(error)")
+                    }
+                    continuation.resume(returning: t)
+                }
+            }
+        }
+        let userId = AuthService.shared.getCurrentUserId()
+        print("📋 [NotificationService] saveTokenIfNeeded - token: \(token != nil ? "present" : "nil"), userId: \(userId ?? "nil")")
+        if let token = token {
+            await handleFCMToken(token)
+        } else {
+            print("⚠️ [NotificationService] saveTokenIfNeeded - token nil (APNs pode não estar configurado para este app no Firebase Cloud Messaging)")
         }
     }
     

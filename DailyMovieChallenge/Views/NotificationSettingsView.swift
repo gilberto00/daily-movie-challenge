@@ -91,6 +91,8 @@ struct NotificationSettingsView: View {
         }
         .task {
             await loadSettings()
+            // Tentar salvar token FCM ao abrir configurações (usuário autenticado, token pode estar pronto)
+            await NotificationService.shared.saveTokenIfNeeded()
         }
         .alert(String(localized: "settings.settings_saved"), isPresented: $showSuccessAlert) {
             Button(String(localized: "settings.ok"), role: .cancel) { }

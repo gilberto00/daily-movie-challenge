@@ -26,6 +26,27 @@ enum DeepLinkDestination: Hashable {
         
         // Suporta tanto URL schemes customizados quanto Universal Links
         let path = url.pathComponents
+        let normalizedPath = path.filter { $0 != "/" }
+
+        // Handle dailymoviechallenge://challenge/today ou https://dailymoviechallenge.app/challenge/today
+        if url.host == "challenge" {
+            if normalizedPath.first?.lowercased() == "today" {
+                return .trivia
+            }
+            if let movieIdString = url.queryParameters?["movieId"],
+               let movieId = Int(movieIdString) {
+                return .challenge(movieId: movieId)
+            }
+        }
+        if normalizedPath.first?.lowercased() == "challenge" {
+            if normalizedPath.count >= 2 && normalizedPath[1].lowercased() == "today" {
+                return .trivia
+            }
+            if let movieIdString = url.queryParameters?["movieId"],
+               let movieId = Int(movieIdString) {
+                return .challenge(movieId: movieId)
+            }
+        }
         
         // URL scheme: dailymoviechallenge://home
         // Universal Link: https://dailymoviechallenge.app/home

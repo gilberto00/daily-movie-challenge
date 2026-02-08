@@ -12,6 +12,7 @@ import UserNotifications
 
 @main
 struct DailyMovieChallengeApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authViewModel = AuthViewModel()
     @StateObject private var deepLinkService = DeepLinkService.shared
     @State private var navigationPath = NavigationPath()
@@ -41,9 +42,14 @@ struct DailyMovieChallengeApp: App {
                     print("🔄 [DailyMovieChallengeApp] App task started - authenticating...")
                     await authViewModel.authenticate()
                     
-                    // Solicitar permissão de notificações após autenticação
                     if authViewModel.isAuthenticated {
                         _ = await NotificationService.shared.requestAuthorization()
+                        // Delay: token FCM demora ~2–5s após registerForRemoteNotifications
+                        try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 segundos
+                        await NotificationService.shared.saveTokenIfNeeded()
+                        // Retry após mais 3s (token pode chegar tarde)
+                        try? await Task.sleep(nanoseconds: 3_000_000_000)
+                        await NotificationService.shared.saveTokenIfNeeded()
                     }
                 }
                 .onAppear {

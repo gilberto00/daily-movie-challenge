@@ -183,6 +183,25 @@ export function generateRandomQuestion(movie: TMDBMovie, excludeTypes: string[],
 }
 
 /**
+ * Gera uma pergunta baseada em um tipo específico (mantém o mesmo tipo entre idiomas).
+ */
+export function generateQuestionByType(questionType: string, movie: TMDBMovie, lang?: Lang): Question {
+  switch (questionType) {
+    case 'director':
+      return generateDirectorQuestion(movie, lang);
+    case 'rating':
+      return generateRatingQuestion(movie, lang);
+    case 'genre':
+      return generateGenreQuestion(movie, lang);
+    case 'runtime':
+      return generateRuntimeQuestion(movie, lang);
+    case 'year':
+    default:
+      return generateYearQuestion(movie, lang);
+  }
+}
+
+/**
  * Gera uma curiosidade no idioma solicitado
  */
 export function generateCuriosity(movie: TMDBMovie, lang?: Lang): string {

@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { fetchPopularMovie, fetchMovieDetails, getPosterUrl } from './utils/tmdb';
-import { generateYearQuestion, generateCuriosity, generateRandomQuestion } from './utils/questionGenerator';
+import { generateYearQuestion, generateCuriosity, generateRandomQuestion, generateQuestionByType } from './utils/questionGenerator';
 import { normalizeLang } from './utils/translations';
 
 admin.initializeApp();
@@ -46,15 +46,22 @@ export const getDailyChallenge = functions
       const existingDoc = await challengeRef.get();
       if (existingDoc.exists) {
         const data = existingDoc.data()!;
-        // Se idioma não for inglês, traduzir pergunta e curiosidade (opções/correctAnswer permanecem)
+        // Se idioma não for inglês, traduzir pergunta/curiosidade mantendo o tipo original
         if (lang !== 'en') {
           const movie = await fetchMovieDetails(data.movieId);
           if (movie) {
-            const questionData = generateYearQuestion(movie, lang as 'pt-BR' | 'fr-CA');
+            const questionData = generateQuestionByType(
+              data.questionType ?? 'year',
+              movie,
+              lang as 'pt-BR' | 'fr-CA'
+            );
             const curiosity = generateCuriosity(movie, lang as 'pt-BR' | 'fr-CA');
             res.json({
               ...data,
               question: questionData.question,
+              options: questionData.options,
+              correctAnswer: questionData.correctAnswer,
+              questionType: questionData.questionType,
               curiosity,
             });
             return;
@@ -66,7 +73,7 @@ export const getDailyChallenge = functions
 
       // Gerar novo challenge (armazenar em inglês; resposta traduzida ao devolver se lang !== en)
       const movie = await fetchPopularMovie();
-      const questionData = generateYearQuestion(movie, 'en');
+      const questionData = generateRandomQuestion(movie, [], 'en');
       const curiosity = generateCuriosity(movie, 'en');
 
       const challenge = {
@@ -77,7 +84,7 @@ export const getDailyChallenge = functions
         question: questionData.question,
         options: questionData.options,
         correctAnswer: questionData.correctAnswer,
-        questionType: 'year',
+        questionType: questionData.questionType,
         curiosity: curiosity,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
@@ -85,9 +92,20 @@ export const getDailyChallenge = functions
       await challengeRef.set(challenge);
 
       if (lang !== 'en') {
-        const questionDataLang = generateYearQuestion(movie, lang as 'pt-BR' | 'fr-CA');
+        const questionDataLang = generateQuestionByType(
+          questionData.questionType,
+          movie,
+          lang as 'pt-BR' | 'fr-CA'
+        );
         const curiosityLang = generateCuriosity(movie, lang as 'pt-BR' | 'fr-CA');
-        res.json({ ...challenge, question: questionDataLang.question, curiosity: curiosityLang });
+        res.json({
+          ...challenge,
+          question: questionDataLang.question,
+          options: questionDataLang.options,
+          correctAnswer: questionDataLang.correctAnswer,
+          questionType: questionDataLang.questionType,
+          curiosity: curiosityLang
+        });
       } else {
         res.json(challenge);
       }
@@ -210,6 +228,39 @@ function getTodayString(): string {
 }
 
 /**
+ * Helper: Retorna o início do dia (00:00) no fuso informado.
+ */
+function getStartOfTodayInTimeZone(timeZone: string): Date {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(now);
+  const year = Number(parts.find(p => p.type === 'year')?.value);
+  const month = Number(parts.find(p => p.type === 'month')?.value);
+  const day = Number(parts.find(p => p.type === 'day')?.value);
+  const utcMidnight = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  const tzDateString = utcMidnight.toLocaleString('en-US', { timeZone });
+  const tzDate = new Date(tzDateString);
+  const offsetMs = utcMidnight.getTime() - tzDate.getTime();
+  return new Date(utcMidnight.getTime() + offsetMs);
+}
+
+/**
+ * Helper: Formata data em YYYY-MM-DD no fuso informado.
+ */
+function formatDateInTimeZone(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date);
+}
+
+/**
  * Notificação diária de novo desafio (9h da manhã)
  * Scheduled function via Cloud Scheduler
  */
@@ -222,6 +273,16 @@ export const sendDailyChallengeNotification = functions
     try {
       const db = admin.firestore();
       const messaging = admin.messaging();
+      const timeZone = 'America/Toronto';
+      
+      // Buscar usuários que já completaram o desafio hoje (para não enviar notificação)
+      const startOfDay = getStartOfTodayInTimeZone(timeZone);
+      const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+      const completedSnapshot = await db.collection('users')
+        .where('lastChallengeDate', '>=', admin.firestore.Timestamp.fromDate(startOfDay))
+        .where('lastChallengeDate', '<', admin.firestore.Timestamp.fromDate(endOfDay))
+        .get();
+      const completedUserIds = new Set<string>(completedSnapshot.docs.map(doc => doc.id));
       
       // Buscar todos os tokens FCM de usuários que têm notificações diárias habilitadas
       const tokensSnapshot = await db.collection('fcmTokens').get();
@@ -239,7 +300,7 @@ export const sendDailyChallengeNotification = functions
         const settings = settingsMap.get(userId);
         
         // Incluir apenas se dailyChallenge estiver habilitado (default: true)
-        if (settings?.dailyChallenge !== false) {
+        if (settings?.dailyChallenge !== false && !completedUserIds.has(userId)) {
           const token = doc.data().token;
           if (token) {
             tokens.push(token);
@@ -307,8 +368,8 @@ export const sendStreakReminderNotification = functions
     try {
       const db = admin.firestore();
       const messaging = admin.messaging();
-      
-      const today = new Date().toISOString().split('T')[0];
+      const timeZone = 'America/Toronto';
+      const today = formatDateInTimeZone(new Date(), timeZone);
       
       // Buscar usuários com streak > 0
       const usersSnapshot = await db.collection('users')
@@ -325,7 +386,7 @@ export const sendStreakReminderNotification = functions
         
         // Verificar se completou desafio hoje
         const completedToday = lastChallengeDate && 
-          lastChallengeDate.toDate().toISOString().split('T')[0] === today;
+          formatDateInTimeZone(lastChallengeDate.toDate(), timeZone) === today;
         
         if (!completedToday) {
           // Verificar settings de notificação

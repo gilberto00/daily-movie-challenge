@@ -26,6 +26,10 @@ struct ResultView: View {
     @State private var isLoadingExtra = false
     @State private var navigateToExtraQuestion = false
     @State private var showShareSheet = false
+    @State private var showChallengeShareSheet = false
+    @State private var showCopyAlert = false
+    @State private var dailyReminderEnabled = true
+    @State private var isLoadingReminderSetting = false
     
     // Computed property para verificar se todas as perguntas foram jogadas
     private var allQuestionsPlayed: Bool {
@@ -38,6 +42,24 @@ struct ResultView: View {
             return String(format: String(localized: "result.share_message_correct"), streak)
         }
         return String(format: String(localized: "result.share_message_incorrect"), streak)
+    }
+
+    private var challengeShareURL: URL? {
+        URL(string: "dailymoviechallenge://challenge/today")
+    }
+
+    private var challengeShareMessage: String {
+        let streak = max(challengeViewModel.userStreak, 0)
+        let link = challengeShareURL?.absoluteString ?? "dailymoviechallenge://challenge/today"
+        return String(format: String(localized: "result.challenge_share_message"), streak, link)
+    }
+
+    private var challengeShareItems: [Any] {
+        var items: [Any] = [challengeShareMessage]
+        if let url = challengeShareURL {
+            items.append(url)
+        }
+        return items
     }
 
     private var facebookShareURL: URL? {
@@ -103,42 +125,112 @@ struct ResultView: View {
                 .cornerRadius(12)
 
                 if challengeViewModel.isDailyChallengeActive {
-                    Button {
-                        showShareSheet = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "square.and.arrow.up")
-                            Text(String(localized: "result.share_button"))
-                                .font(.headline)
-                            Spacer()
-                        }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.orange)
-                        .cornerRadius(12)
-                    }
-                    .sheet(isPresented: $showShareSheet) {
-                        ActivityView(activityItems: [shareMessage])
-                    }
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(String(localized: "result.quick_actions"))
+                            .font(.headline)
+                            .foregroundColor(.secondary)
 
-                    Button {
-                        if let url = facebookShareURL {
-                            openURL(url)
+                        Button {
+                            UIPasteboard.general.string = shareMessage
+                            showCopyAlert = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "doc.on.doc")
+                                Text(String(localized: "result.copy_result"))
+                                    .font(.headline)
+                                Spacer()
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.gray)
+                            .cornerRadius(12)
                         }
-                    } label: {
-                        HStack {
-                            Image(systemName: "f.circle.fill")
-                            Text(String(localized: "result.share_facebook_button"))
-                                .font(.headline)
-                            Spacer()
+
+                        Button {
+                            showShareSheet = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "square.and.arrow.up")
+                                Text(String(localized: "result.share_button"))
+                                    .font(.headline)
+                                Spacer()
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.orange)
+                            .cornerRadius(12)
                         }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(12)
+                        .sheet(isPresented: $showShareSheet) {
+                            ActivityView(
+                                activityItems: [shareMessage],
+                                subject: String(localized: "result.share_subject")
+                            )
+                        }
+
+                        Button {
+                            if let url = facebookShareURL {
+                                openURL(url)
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "f.circle.fill")
+                                Text(String(localized: "result.share_facebook_button"))
+                                    .font(.headline)
+                                Spacer()
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .cornerRadius(12)
+                        }
+
+                        Button {
+                            showChallengeShareSheet = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "paperplane.fill")
+                                Text(String(localized: "result.challenge_share_button"))
+                                    .font(.headline)
+                                Spacer()
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.teal)
+                            .cornerRadius(12)
+                        }
+                        .sheet(isPresented: $showChallengeShareSheet) {
+                            ActivityView(
+                                activityItems: challengeShareItems,
+                                subject: String(localized: "result.challenge_share_subject")
+                            )
+                        }
                     }
+                    .padding()
+                    .background(Color.secondary.opacity(0.08))
+                    .cornerRadius(12)
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(String(localized: "result.streak_title"))
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+
+                        StreakTrackerView(streak: challengeViewModel.userStreak)
+
+                        Toggle(String(localized: "result.reminder_toggle"), isOn: $dailyReminderEnabled)
+                            .disabled(isLoadingReminderSetting)
+                            .onChange(of: dailyReminderEnabled) { oldValue, newValue in
+                                Task {
+                                    await updateDailyReminderSetting(isEnabled: newValue)
+                                }
+                            }
+                    }
+                    .padding()
+                    .background(Color.secondary.opacity(0.08))
+                    .cornerRadius(12)
                 }
                 
                 // View Comments Button com contador
@@ -342,6 +434,7 @@ struct ResultView: View {
                 }
             }
             await loadCommentsCount()
+            await loadDailyReminderSetting()
         }
         .sheet(isPresented: $showCommentsSheet) {
             NavigationStack {
@@ -370,6 +463,11 @@ struct ResultView: View {
                 }
             }
         }
+        .alert(String(localized: "result.copied_title"), isPresented: $showCopyAlert) {
+            Button(String(localized: "result.copied_ok"), role: .cancel) { }
+        } message: {
+            Text(String(localized: "result.copied_message"))
+        }
         .animation(.default, value: commentsCount)
         .navigationDestination(isPresented: $navigateToExtraQuestion) {
             if let challenge = challengeViewModel.challenge {
@@ -395,6 +493,30 @@ struct ResultView: View {
         }
         isLoadingCommentsCount = false
     }
+
+    private func loadDailyReminderSetting() async {
+        guard challengeViewModel.isDailyChallengeActive else { return }
+        isLoadingReminderSetting = true
+        do {
+            let settings = try await NotificationService.shared.getNotificationSettings()
+            dailyReminderEnabled = settings.dailyChallenge
+        } catch {
+            print("⚠️ [ResultView] Error loading notification settings: \(error.localizedDescription)")
+        }
+        isLoadingReminderSetting = false
+    }
+
+    private func updateDailyReminderSetting(isEnabled: Bool) async {
+        isLoadingReminderSetting = true
+        do {
+            var settings = try await NotificationService.shared.getNotificationSettings()
+            settings.dailyChallenge = isEnabled
+            try await NotificationService.shared.updateNotificationSettings(settings)
+        } catch {
+            print("⚠️ [ResultView] Error saving notification settings: \(error.localizedDescription)")
+        }
+        isLoadingReminderSetting = false
+    }
 }
 
 #Preview {
@@ -415,11 +537,36 @@ struct ResultView: View {
 
 private struct ActivityView: UIViewControllerRepresentable {
     let activityItems: [Any]
+    let subject: String?
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+        if let subject {
+            controller.setValue(subject, forKey: "subject")
+        }
+        return controller
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
+    }
+}
+
+private struct StreakTrackerView: View {
+    let streak: Int
+
+    var body: some View {
+        let maxDays = 7
+        let filledCount = min(max(streak, 0), maxDays)
+        HStack(spacing: 6) {
+            ForEach(0..<maxDays, id: \.self) { index in
+                Circle()
+                    .fill(index < filledCount ? Color.orange : Color.gray.opacity(0.3))
+                    .frame(width: 14, height: 14)
+            }
+            Spacer()
+            Text(String(format: String(localized: "result.streak_format"), streak))
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
     }
 }

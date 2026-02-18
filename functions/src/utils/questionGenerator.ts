@@ -12,6 +12,21 @@ function defaultLang(lang?: Lang): Lang {
   return lang ?? 'en';
 }
 
+function normalizeAnswer(s: string): string {
+  return s.trim().toLowerCase();
+}
+
+function isUnknownDirectorValue(value: string | undefined): boolean {
+  if (!value) return true;
+  const v = normalizeAnswer(value);
+  const unknowns = new Set([
+    normalizeAnswer(getUnknownDirector('en')),
+    normalizeAnswer(getUnknownDirector('pt-BR')),
+    normalizeAnswer(getUnknownDirector('fr-CA')),
+  ]);
+  return unknowns.has(v);
+}
+
 /**
  * Gera uma pergunta sobre o ano de lançamento do filme (no idioma solicitado)
  */
@@ -43,7 +58,14 @@ export function generateYearQuestion(movie: TMDBMovie, lang?: Lang): Question {
  */
 export function generateDirectorQuestion(movie: TMDBMovie, lang?: Lang): Question {
   const l = defaultLang(lang);
-  const director = movie.director || getUnknownDirector(l);
+  const director = movie.director?.trim();
+
+  // Se nao temos diretor confiavel, evitamos expor "Unknown" como alternativa/correta.
+  // Em vez disso, retornamos uma pergunta segura (ano).
+  if (!director || isUnknownDirectorValue(director)) {
+    return generateYearQuestion(movie, lang);
+  }
+
   const directors = [
     'Christopher Nolan',
     'Steven Spielberg',
@@ -164,9 +186,11 @@ export function generateRuntimeQuestion(movie: TMDBMovie, lang?: Lang): Question
  * Gera uma pergunta aleatória sobre o filme (excluindo tipos já jogados)
  */
 export function generateRandomQuestion(movie: TMDBMovie, excludeTypes: string[], lang?: Lang): Question {
+  const canAskDirector = !isUnknownDirectorValue(movie.director);
   const availableTypes = [
     { type: 'year', generator: (m: TMDBMovie) => generateYearQuestion(m, lang) },
-    { type: 'director', generator: (m: TMDBMovie) => generateDirectorQuestion(m, lang) },
+    // So inclui diretor se o dado existe; evita "Unknown" no app.
+    ...(canAskDirector ? [{ type: 'director', generator: (m: TMDBMovie) => generateDirectorQuestion(m, lang) }] : []),
     { type: 'rating', generator: (m: TMDBMovie) => generateRatingQuestion(m, lang) },
     { type: 'genre', generator: (m: TMDBMovie) => generateGenreQuestion(m, lang) },
     { type: 'runtime', generator: (m: TMDBMovie) => generateRuntimeQuestion(m, lang) },

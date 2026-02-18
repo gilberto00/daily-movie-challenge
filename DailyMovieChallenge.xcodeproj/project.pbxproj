@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E51079D92F4552E100D883FB /* EffectsLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = E5AFECAE2F1F1E9700DFA4BA /* EffectsLibrary */; };
 		E5AFECA72F1F1E9700DFA4B7 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = E5AFECA62F1F1E9700DFA4B7 /* FirebaseAuth */; };
 		E5AFECA92F1F1E9700DFA4B7 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = E5AFECA82F1F1E9700DFA4B7 /* FirebaseCore */; };
 		E5AFECAB2F1F1E9700DFA4B7 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = E5AFECAA2F1F1E9700DFA4B7 /* FirebaseFirestore */; };
@@ -43,6 +44,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E51079D92F4552E100D883FB /* EffectsLibrary in Frameworks */,
 				E5AFECA92F1F1E9700DFA4B7 /* FirebaseCore in Frameworks */,
 				E5AFECA72F1F1E9700DFA4B7 /* FirebaseAuth in Frameworks */,
 				E5AFECAB2F1F1E9700DFA4B7 /* FirebaseFirestore in Frameworks */,
@@ -93,6 +95,7 @@
 				E5AFECA82F1F1E9700DFA4B7 /* FirebaseCore */,
 				E5AFECAA2F1F1E9700DFA4B7 /* FirebaseFirestore */,
 				E5AFECAC2F1F1E9700DFA4B8 /* FirebaseMessaging */,
+				E5AFECAE2F1F1E9700DFA4BA /* EffectsLibrary */,
 			);
 			productName = DailyMovieChallenge;
 			productReference = E55052692F1F1BBB00DE9B03 /* DailyMovieChallenge.app */;
@@ -126,6 +129,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				E5AFECA52F1F1E9700DFA4B7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				E5AFECAD2F1F1E9700DFA4B9 /* XCRemoteSwiftPackageReference "effects-library" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E550526A2F1F1BBB00DE9B03 /* Products */;
@@ -381,6 +385,14 @@
 				minimumVersion = 12.8.0;
 			};
 		};
+		E5AFECAD2F1F1E9700DFA4B9 /* XCRemoteSwiftPackageReference "effects-library" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/GetStream/effects-library";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -403,6 +415,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E5AFECA52F1F1E9700DFA4B7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		E5AFECAE2F1F1E9700DFA4BA /* EffectsLibrary */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E5AFECAD2F1F1E9700DFA4B9 /* XCRemoteSwiftPackageReference "effects-library" */;
+			productName = EffectsLibrary;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -2,7 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { fetchPopularMovie, fetchMovieDetails, getPosterUrl } from './utils/tmdb';
 import { generateYearQuestion, generateCuriosity, generateRandomQuestion, generateQuestionByType } from './utils/questionGenerator';
-import { normalizeLang } from './utils/translations';
+import { normalizeLang, getUnknownDirector, type Lang } from './utils/translations';
 
 admin.initializeApp();
 
@@ -16,6 +16,17 @@ function getLangFromRequest(req: functions.https.Request): string {
     return normalizeLang(first);
   }
   return normalizeLang(undefined);
+}
+
+function isUnknownAnswer(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  const v = value.trim().toLowerCase();
+  const unknowns = new Set<string>([
+    getUnknownDirector('en' as Lang),
+    getUnknownDirector('pt-BR' as Lang),
+    getUnknownDirector('fr-CA' as Lang),
+  ].map((s) => s.trim().toLowerCase()));
+  return unknowns.has(v);
 }
 
 /**
@@ -45,7 +56,30 @@ export const getDailyChallenge = functions
 
       const existingDoc = await challengeRef.get();
       if (existingDoc.exists) {
-        const data = existingDoc.data()!;
+        let data = existingDoc.data() as any;
+
+        // Auto-heal: se um desafio antigo salvou "Unknown" nas opcoes (ou como resposta),
+        // regeneramos usando detalhes completos do TMDB e atualizamos o documento.
+        const hasUnknownOption = Array.isArray(data.options) && data.options.some((o: any) => isUnknownAnswer(o));
+        const looksBrokenDirector = (data.questionType === 'director') && (isUnknownAnswer(data.correctAnswer) || hasUnknownOption);
+        if (looksBrokenDirector) {
+          const movie = await fetchMovieDetails(data.movieId);
+          if (movie) {
+            const fixed = generateQuestionByType('director', movie, 'en');
+            const fixedCuriosity = generateCuriosity(movie, 'en');
+            const patch = {
+              question: fixed.question,
+              options: fixed.options,
+              correctAnswer: fixed.correctAnswer,
+              questionType: fixed.questionType,
+              curiosity: fixedCuriosity,
+              healedAt: admin.firestore.FieldValue.serverTimestamp(),
+            };
+            await challengeRef.set(patch, { merge: true });
+            data = { ...data, ...patch };
+          }
+        }
+
         // Se idioma não for inglês, traduzir pergunta/curiosidade mantendo o tipo original
         if (lang !== 'en') {
           const movie = await fetchMovieDetails(data.movieId);
@@ -73,14 +107,17 @@ export const getDailyChallenge = functions
 
       // Gerar novo challenge (armazenar em inglês; resposta traduzida ao devolver se lang !== en)
       const movie = await fetchPopularMovie();
-      const questionData = generateRandomQuestion(movie, [], 'en');
-      const curiosity = generateCuriosity(movie, 'en');
+      // Alguns tipos de pergunta (director/runtime/genre) precisam de dados que NÃO vêm em /movie/popular.
+      // Então buscamos detalhes completos antes de gerar a pergunta.
+      const detailedMovie = (await fetchMovieDetails(movie.id)) ?? movie;
+      const questionData = generateRandomQuestion(detailedMovie, [], 'en');
+      const curiosity = generateCuriosity(detailedMovie, 'en');
 
       const challenge = {
         id: date,
-        movieId: movie.id,
-        title: movie.title,
-        posterUrl: getPosterUrl(movie.poster_path),
+        movieId: detailedMovie.id,
+        title: detailedMovie.title,
+        posterUrl: getPosterUrl(detailedMovie.poster_path),
         question: questionData.question,
         options: questionData.options,
         correctAnswer: questionData.correctAnswer,
@@ -94,10 +131,10 @@ export const getDailyChallenge = functions
       if (lang !== 'en') {
         const questionDataLang = generateQuestionByType(
           questionData.questionType,
-          movie,
+          detailedMovie,
           lang as 'pt-BR' | 'fr-CA'
         );
-        const curiosityLang = generateCuriosity(movie, lang as 'pt-BR' | 'fr-CA');
+        const curiosityLang = generateCuriosity(detailedMovie, lang as 'pt-BR' | 'fr-CA');
         res.json({
           ...challenge,
           question: questionDataLang.question,

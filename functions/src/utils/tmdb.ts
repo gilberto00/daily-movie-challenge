@@ -83,11 +83,13 @@ export async function fetchMovieDetails(movieId: number): Promise<TMDBMovie | nu
 
     const director = creditsResponse.data.crew?.find(
       (person: any) => person.job === 'Director'
-    )?.name || 'Unknown';
+    )?.name;
 
     return {
       ...response.data,
-      director: director,
+      // Se não acharmos um diretor, preferimos omitir o campo em vez de injetar "Unknown".
+      // Isso permite ao gerador evitar perguntas de diretor automaticamente.
+      director: director ?? undefined,
     };
   } catch (error) {
     console.error(`Error fetching movie details for ID ${movieId}:`, error);

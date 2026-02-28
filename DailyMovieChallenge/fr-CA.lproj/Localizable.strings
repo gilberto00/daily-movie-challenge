@@ -33,6 +33,11 @@
 "result.copied_ok" = "OK";
 "result.streak_title" = "Votre série";
 "result.streak_format" = "Série : %d";
+"result.weekly_status_title" = "Statut hebdomadaire";
+"result.weekly_status_loading" = "Chargement du statut hebdomadaire...";
+"result.weekly_status_success" = "Réussi";
+"result.weekly_status_fail" = "Échec";
+"result.weekly_status_no_interaction" = "Aucune interaction";
 "result.reminder_toggle" = "Me rappeler le défi de demain";
 "result.share_button" = "Partager";
 "result.share_facebook_button" = "Partager sur Facebook";

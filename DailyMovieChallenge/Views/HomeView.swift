@@ -178,6 +178,8 @@ struct HomeView: View {
     @Binding var navigationPath: NavigationPath
     @State private var showLeaderboard = false
     @State private var showNotificationSettings = false
+    @State private var showDelayedLoading = false
+    @State private var loadingDelayTask: Task<Void, Never>?
     
     var body: some View {
         ScrollView {
@@ -221,8 +223,10 @@ struct HomeView: View {
                 .cornerRadius(12)
                 
                 if challengeViewModel.isLoading {
-                    ProgressView(String(localized: "home.loading"))
-                        .padding()
+                    if showDelayedLoading {
+                        ChallengeLoadingView()
+                            .transition(.opacity)
+                    }
                 } else if let challenge = challengeViewModel.challenge {
                     MoviePosterImageView(posterUrl: challenge.posterUrl, movieTitle: challenge.title)
                     
@@ -284,11 +288,19 @@ struct HomeView: View {
             if challengeViewModel.challenge != nil && challengeViewModel.isLoading {
                 challengeViewModel.isLoading = false
             }
+            updateDelayedLoading(challengeViewModel.isLoading)
         }
         .onChange(of: challengeViewModel.challenge) { oldChallenge, newChallenge in
             if newChallenge != nil && challengeViewModel.isLoading {
                 challengeViewModel.isLoading = false
             }
+        }
+        .onChange(of: challengeViewModel.isLoading) { _, newValue in
+            updateDelayedLoading(newValue)
+        }
+        .onDisappear {
+            loadingDelayTask?.cancel()
+            loadingDelayTask = nil
         }
         .navigationDestination(for: NavigationDestination.self) { destination in
             switch destination {
@@ -319,6 +331,27 @@ struct HomeView: View {
         .sheet(isPresented: $showNotificationSettings) {
             NavigationStack {
                 NotificationSettingsView()
+            }
+        }
+    }
+
+    private func updateDelayedLoading(_ isLoading: Bool) {
+        loadingDelayTask?.cancel()
+        loadingDelayTask = nil
+
+        if isLoading {
+            showDelayedLoading = false
+            loadingDelayTask = Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                if challengeViewModel.isLoading {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showDelayedLoading = true
+                    }
+                }
+            }
+        } else {
+            withAnimation(.easeOut(duration: 0.15)) {
+                showDelayedLoading = false
             }
         }
     }

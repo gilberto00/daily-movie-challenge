@@ -33,6 +33,11 @@
 "result.copied_ok" = "OK";
 "result.streak_title" = "Your streak";
 "result.streak_format" = "Streak: %d";
+"result.weekly_status_title" = "Weekly status";
+"result.weekly_status_loading" = "Loading weekly status...";
+"result.weekly_status_success" = "Success";
+"result.weekly_status_fail" = "Fail";
+"result.weekly_status_no_interaction" = "No interaction";
 "result.reminder_toggle" = "Remind me about tomorrow's challenge";
 "result.share_button" = "Share";
 "result.share_facebook_button" = "Share on Facebook";

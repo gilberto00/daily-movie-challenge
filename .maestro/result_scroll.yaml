@@ -1,0 +1,25 @@
+appId: com.gilbertorosa.cinedaily
+---
+- launchApp
+- assertVisible: "Play"
+- tapOn: "Play"
+- waitForAnimationToEnd
+
+# Seleciona uma opção na grade/lista de respostas
+- tapOn:
+    point: "24%,68%"
+- tapOn:
+    point: "72%,68%"
+
+- tapOn: "Submit"
+- assertVisible: "Result"
+
+- takeScreenshot: "result_before_scroll"
+- swipe:
+    start: "50%,82%"
+    end: "50%,28%"
+    duration: 500
+- takeScreenshot: "result_after_scroll"
+
+# Prova de rolagem: após swipe, área de comentários (abaixo da dobra) aparece.
+- assertVisible: "View Comments"

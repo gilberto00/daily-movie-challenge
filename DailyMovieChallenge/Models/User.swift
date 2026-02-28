@@ -7,6 +7,23 @@
 
 import Foundation
 
+enum DailyChallengeOutcome: String, Codable {
+    case success
+    case fail
+}
+
+struct WeeklyStatusDay: Identifiable {
+    let date: Date
+    let outcome: DailyChallengeOutcome?
+
+    var id: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone.current
+        return formatter.string(from: date)
+    }
+}
+
 struct User: Codable {
     let id: String
     let createdAt: Date
@@ -17,6 +34,7 @@ struct User: Codable {
     var score: Int // Pontuação calculada
     var badges: [String] // Lista de badges conquistados
     var lastChallengeDate: Date? // Data do último desafio completado
+    var dailyChallengeStatus: [String: String]? // Mapa YYYY-MM-DD -> success/fail
     
     var accuracyRate: Double {
         guard totalAnswers > 0 else { return 0.0 }

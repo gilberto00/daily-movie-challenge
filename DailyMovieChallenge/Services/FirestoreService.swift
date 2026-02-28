@@ -11,6 +11,8 @@ import FirebaseFirestore
 class FirestoreService {
     static let shared = FirestoreService()
     private let db = Firestore.firestore()
+    private static let dailyStatusField = "dailyChallengeStatus"
+    private static let dailyStatusRetentionDays = 35
     
     private init() {}
     
@@ -28,7 +30,8 @@ class FirestoreService {
                     "correctAnswers": 0,
                     "totalAnswers": 0,
                     "score": 0,
-                    "badges": []
+                    "badges": [],
+                    Self.dailyStatusField: [:]
                 ])
             }
         } catch {
@@ -270,6 +273,13 @@ class FirestoreService {
         // Se o documento não existe, criar primeiro
         if !userDoc.exists {
             let initialStreak = (isDailyChallengeCompletion && isCorrect && challengeDate != nil) ? 1 : 0
+            let initialDailyStatus: [String: String]
+            if isDailyChallengeCompletion, let challengeDate {
+                let outcome: DailyChallengeOutcome = isCorrect ? .success : .fail
+                initialDailyStatus = [challengeDate: outcome.rawValue]
+            } else {
+                initialDailyStatus = [:]
+            }
             try await userRef.setData([
                 "createdAt": FieldValue.serverTimestamp(),
                 "streak": initialStreak,
@@ -278,7 +288,8 @@ class FirestoreService {
                 "totalAnswers": 1,
                 "score": isCorrect ? 11 : 1,
                 "badges": [],
-                "lastChallengeDate": FieldValue.serverTimestamp()
+                "lastChallengeDate": FieldValue.serverTimestamp(),
+                Self.dailyStatusField: initialDailyStatus
             ])
             print("✅ [FirestoreService] User created with initial stats, streak: \(initialStreak)")
             return isDailyChallengeCompletion ? initialStreak : nil
@@ -293,6 +304,7 @@ class FirestoreService {
         let correctAnswers = (data["correctAnswers"] as? Int) ?? 0
         let totalAnswers = (data["totalAnswers"] as? Int) ?? 0
         var streak = (data["streak"] as? Int) ?? 0
+        var dailyStatus = (data[Self.dailyStatusField] as? [String: String]) ?? [:]
         
         // Streak só muda quando é conclusão do desafio do dia (uma vez por dia)
         if isDailyChallengeCompletion, let todayStr = challengeDate {
@@ -313,6 +325,17 @@ class FirestoreService {
                 streak = 0
             }
             print("📊 [FirestoreService] Daily completion - today: \(todayStr), last: \(lastStr), newStreak: \(streak)")
+
+            // Status diário: mantém "success" caso já exista e evita downgrade para "fail".
+            let existingOutcome = DailyChallengeOutcome(rawValue: dailyStatus[todayStr] ?? "")
+            let newOutcome: DailyChallengeOutcome
+            if existingOutcome == .success {
+                newOutcome = .success
+            } else {
+                newOutcome = isCorrect ? .success : .fail
+            }
+            dailyStatus[todayStr] = newOutcome.rawValue
+            dailyStatus = Self.trimDailyStatusMap(dailyStatus, keepLast: Self.dailyStatusRetentionDays)
         }
         
         let newTotalChallenges = totalChallenges + 1
@@ -332,6 +355,7 @@ class FirestoreService {
         ]
         if isDailyChallengeCompletion {
             updatePayload["streak"] = streak
+            updatePayload[Self.dailyStatusField] = dailyStatus
         }
         try await userRef.updateData(updatePayload)
         
@@ -349,6 +373,17 @@ class FirestoreService {
     
     private static func dateToYYYYMMDD(_ date: Date) -> String {
         dateFormatter.string(from: date)
+    }
+
+    private static func trimDailyStatusMap(_ map: [String: String], keepLast: Int) -> [String: String] {
+        guard map.count > keepLast else { return map }
+        let sortedKeys = map.keys.sorted()
+        let keysToRemove = sortedKeys.prefix(max(0, sortedKeys.count - keepLast))
+        var trimmed = map
+        for key in keysToRemove {
+            trimmed.removeValue(forKey: key)
+        }
+        return trimmed
     }
     
     /// Retorna o dia anterior a uma data no formato YYYY-MM-DD
@@ -394,6 +429,28 @@ class FirestoreService {
                 "badges": currentBadges
             ])
         }
+    }
+
+    func fetchWeeklyStatus(userId: String, endingAt endDate: Date = Date(), days: Int = 7) async throws -> [WeeklyStatusDay] {
+        let userDoc = try await db.collection("users").document(userId).getDocument()
+        let data = userDoc.data() ?? [:]
+        let statusMap = (data[Self.dailyStatusField] as? [String: String]) ?? [:]
+
+        let calendar = Calendar.current
+        let endOfDay = calendar.startOfDay(for: endDate)
+        let normalizedDays = max(1, days)
+
+        var result: [WeeklyStatusDay] = []
+        result.reserveCapacity(normalizedDays)
+
+        for offset in stride(from: normalizedDays - 1, through: 0, by: -1) {
+            guard let date = calendar.date(byAdding: .day, value: -offset, to: endOfDay) else { continue }
+            let key = Self.dateToYYYYMMDD(date)
+            let outcome = DailyChallengeOutcome(rawValue: statusMap[key] ?? "")
+            result.append(WeeklyStatusDay(date: date, outcome: outcome))
+        }
+
+        return result
     }
     
     func fetchLeaderboard(limit: Int = 100) async throws -> [LeaderboardEntry] {

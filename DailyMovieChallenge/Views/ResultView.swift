@@ -30,6 +30,8 @@ struct ResultView: View {
     @State private var showCopyAlert = false
     @State private var dailyReminderEnabled = true
     @State private var isLoadingReminderSetting = false
+    @State private var weeklyStatusDays: [WeeklyStatusDay] = []
+    @State private var isLoadingWeeklyStatus = false
     
     // Computed property para verificar se todas as perguntas foram jogadas
     private var allQuestionsPlayed: Bool {
@@ -73,8 +75,7 @@ struct ResultView: View {
     }
     
     var body: some View {
-        ZStack {
-        ScrollView {
+        List {
             VStack(spacing: 24) {
                 // Result Icon com animação (bounce no acerto, shake no erro)
                 Image(systemName: result.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
@@ -130,38 +131,25 @@ struct ResultView: View {
                             .font(.headline)
                             .foregroundColor(.secondary)
 
-                        Button {
-                            UIPasteboard.general.string = shareMessage
-                            showCopyAlert = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "doc.on.doc")
-                                Text(String(localized: "result.copy_result"))
-                                    .font(.headline)
-                                Spacer()
+                        // Bloco principal no estilo dos vídeos: ações rápidas em destaque.
+                        HStack(spacing: 28) {
+                            quickActionIconButton(
+                                icon: "doc.on.doc",
+                                label: String(localized: "result.copy_result")
+                            ) {
+                                UIPasteboard.general.string = shareMessage
+                                showCopyAlert = true
                             }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.gray)
-                            .cornerRadius(12)
-                        }
 
-                        Button {
-                            showShareSheet = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "square.and.arrow.up")
-                                Text(String(localized: "result.share_button"))
-                                    .font(.headline)
-                                Spacer()
+                            quickActionIconButton(
+                                icon: "square.and.arrow.up",
+                                label: String(localized: "result.share_button")
+                            ) {
+                                showShareSheet = true
                             }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.orange)
-                            .cornerRadius(12)
                         }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 4)
                         .sheet(isPresented: $showShareSheet) {
                             ActivityView(
                                 activityItems: [shareMessage],
@@ -214,11 +202,15 @@ struct ResultView: View {
                     .cornerRadius(12)
 
                     VStack(alignment: .leading, spacing: 12) {
-                        Text(String(localized: "result.streak_title"))
+                        Text(String(localized: "result.weekly_status_title"))
                             .font(.headline)
                             .foregroundColor(.secondary)
 
-                        StreakTrackerView(streak: challengeViewModel.userStreak)
+                        WeeklyStatusView(
+                            days: weeklyStatusDays,
+                            isLoading: isLoadingWeeklyStatus,
+                            streak: challengeViewModel.userStreak
+                        )
 
                         Toggle(String(localized: "result.reminder_toggle"), isOn: $dailyReminderEnabled)
                             .disabled(isLoadingReminderSetting)
@@ -378,7 +370,7 @@ struct ResultView: View {
                     .cornerRadius(12)
                 }
                 .disabled(isLoadingExtra)
-                
+
                 // Back to Home Button
                 Button {
                     print("🔄 [ResultView] Back to Home button pressionado")
@@ -392,17 +384,41 @@ struct ResultView: View {
                         .background(Color.blue)
                         .cornerRadius(12)
                 }
+
+                // Overflow garantido para sempre existir rolagem perceptível.
+                Color.clear.frame(height: 220)
             }
             .padding()
+            .padding(.bottom, 220)
+            .listRowInsets(EdgeInsets())
+            .listRowSeparator(.hidden)
         }
-        .overlay {
-            if result.isCorrect && showResult {
-                ConfettiStreamersOverlay(isActive: true)
-                    .zIndex(1)
-            }
-        }
+        .listStyle(.plain)
+        .scrollIndicators(.visible)
+        .scrollBounceBehavior(.always)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 2)
+                .onChanged { value in
+                    #if DEBUG
+                    print("🧭 [ResultView] drag changed dy=\(value.translation.height)")
+                    #endif
+                }
+                .onEnded { value in
+                    #if DEBUG
+                    print("🧭 [ResultView] drag ended dy=\(value.translation.height)")
+                    #endif
+                }
+        )
         .navigationTitle("Result")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(String(localized: "result.back_to_home")) {
+                    onBackToHome()
+                }
+                .font(.subheadline.weight(.semibold))
+            }
+        }
         .task {
             // Haptic: sucesso no acerto, erro no incorreto
             let feedback = UINotificationFeedbackGenerator()
@@ -435,6 +451,7 @@ struct ResultView: View {
             }
             await loadCommentsCount()
             await loadDailyReminderSetting()
+            await loadWeeklyStatus()
         }
         .sheet(isPresented: $showCommentsSheet) {
             NavigationStack {
@@ -480,7 +497,6 @@ struct ResultView: View {
                 .environmentObject(challengeViewModel)
             }
         }
-        }
     }
     
     private func loadCommentsCount() async {
@@ -517,6 +533,36 @@ struct ResultView: View {
         }
         isLoadingReminderSetting = false
     }
+
+    private func loadWeeklyStatus() async {
+        guard let userId = AuthService.shared.getCurrentUserId() else { return }
+        isLoadingWeeklyStatus = true
+        do {
+            weeklyStatusDays = try await FirestoreService.shared.fetchWeeklyStatus(userId: userId, days: 7)
+        } catch {
+            print("⚠️ [ResultView] Error loading weekly status: \(error.localizedDescription)")
+            weeklyStatusDays = []
+        }
+        isLoadingWeeklyStatus = false
+    }
+
+    private func quickActionIconButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundColor(.blue)
+                    .frame(width: 48, height: 48)
+                    .background(Color.white)
+                    .clipShape(Circle())
+                    .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+                Text(label)
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+            }
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 #Preview {
@@ -551,22 +597,3 @@ private struct ActivityView: UIViewControllerRepresentable {
     }
 }
 
-private struct StreakTrackerView: View {
-    let streak: Int
-
-    var body: some View {
-        let maxDays = 7
-        let filledCount = min(max(streak, 0), maxDays)
-        HStack(spacing: 6) {
-            ForEach(0..<maxDays, id: \.self) { index in
-                Circle()
-                    .fill(index < filledCount ? Color.orange : Color.gray.opacity(0.3))
-                    .frame(width: 14, height: 14)
-            }
-            Spacer()
-            Text(String(format: String(localized: "result.streak_format"), streak))
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-    }
-}

@@ -1,0 +1,17 @@
+GitHub Pages — Support URL for App Store Connect
+=================================================
+
+After this folder is on GitHub (branch main), enable Pages once:
+
+1. Open: https://github.com/gilberto00/daily-movie-challenge/settings/pages
+2. Under "Build and deployment" → Source: **Deploy from a branch**
+3. Branch: **main** → Folder: **/docs** → Save
+
+Your Support URL will be:
+
+  https://gilberto00.github.io/daily-movie-challenge/
+
+(Pages can take 1–2 minutes to go live after the first enable.)
+
+If `git push` failed with 403: push from a machine/account that has write
+access to gilberto00/daily-movie-challenge (SSH key or HTTPS for gilberto00).

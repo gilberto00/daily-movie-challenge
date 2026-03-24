@@ -76,8 +76,8 @@ struct ResultView: View {
     }
     
     var body: some View {
-        List {
-            VStack(spacing: 24) {
+        ScrollView {
+            LazyVStack(spacing: 24) {
                 // Result Icon com animação (bounce no acerto, shake no erro)
                 Image(systemName: result.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .resizable()
@@ -175,6 +175,7 @@ struct ResultView: View {
                             .background(Color.blue)
                             .cornerRadius(12)
                         }
+                        .buttonStyle(.borderless)
 
                         Button {
                             showChallengeShareSheet = true
@@ -191,6 +192,7 @@ struct ResultView: View {
                             .background(Color.teal)
                             .cornerRadius(12)
                         }
+                        .buttonStyle(.borderless)
                         .sheet(isPresented: $showChallengeShareSheet) {
                             ActivityView(
                                 activityItems: challengeShareItems,
@@ -257,7 +259,8 @@ struct ResultView: View {
                     .background(Color.blue.opacity(0.1))
                     .cornerRadius(12)
                 }
-                
+                .buttonStyle(.borderless)
+
                 // More Questions (Same Movie) Button
                 Button {
                     Task {
@@ -288,8 +291,9 @@ struct ResultView: View {
                     .background(allQuestionsPlayed ? Color.gray : Color.green)
                     .cornerRadius(12)
                 }
+                .buttonStyle(.borderless)
                 .disabled(isLoadingExtra || allQuestionsPlayed)
-                
+
                 // New Movie Challenge Button
                 Button {
                     Task {
@@ -370,6 +374,7 @@ struct ResultView: View {
                     .background(Color.purple)
                     .cornerRadius(12)
                 }
+                .buttonStyle(.borderless)
                 .disabled(isLoadingExtra)
 
                 // Back to Home Button
@@ -385,16 +390,14 @@ struct ResultView: View {
                         .background(Color.blue)
                         .cornerRadius(12)
                 }
+                .buttonStyle(.borderless)
 
                 // Overflow garantido para sempre existir rolagem perceptível.
                 Color.clear.frame(height: 220)
             }
             .padding()
             .padding(.bottom, 220)
-            .listRowInsets(EdgeInsets())
-            .listRowSeparator(.hidden)
         }
-        .listStyle(.plain)
         .scrollIndicators(.visible)
         .scrollBounceBehavior(.always)
         .overlay {

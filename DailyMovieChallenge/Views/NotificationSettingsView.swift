@@ -64,18 +64,6 @@ struct NotificationSettingsView: View {
                         .buttonStyle(.borderedProminent)
                     }
                 }
-                
-                if let fcmToken = notificationService.fcmToken {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(String(localized: "settings.fcm_token"))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text(fcmToken)
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .textSelection(.enabled)
-                    }
-                }
             } header: {
                 Text(String(localized: "settings.status"))
             }

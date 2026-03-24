@@ -228,12 +228,17 @@ struct LeaderboardRowView: View {
                     .frame(width: 32, height: 32)
             }
             
-            // User info
+            // User info (explicit icon+text avoids Label wrapping digits vertically when space is tight)
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
+                // Name on its own line so "(You)" does not steal horizontal space from long names (e.g. "Player")
+                VStack(alignment: .leading, spacing: 2) {
                     Text(entry.username ?? String(localized: "leaderboard.player"))
                         .font(.headline)
                         .foregroundColor(isCurrentUser ? .blue : .primary)
+                        .lineLimit(2)
+                        .truncationMode(.tail)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .allowsTightening(false)
                     
                     if isCurrentUser {
                         Text(String(localized: "leaderboard.you"))
@@ -243,21 +248,19 @@ struct LeaderboardRowView: View {
                 }
                 
                 HStack(spacing: 12) {
-                    Label("\(entry.score)", systemImage: "star.fill")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                    
-                    Label("\(entry.streak)", systemImage: "flame.fill")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                    
+                    statChip(icon: "star.fill", value: "\(entry.score)", color: .orange)
+                    statChip(icon: "flame.fill", value: "\(entry.streak)", color: .orange)
                     Text("\(entry.accuracyRate, specifier: "%.0f")%")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
+                .lineLimit(1)
             }
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             
-            Spacer()
+            Spacer(minLength: 8)
             
             // Badges
             if !entry.badges.isEmpty {
@@ -269,13 +272,27 @@ struct LeaderboardRowView: View {
                         Text(String(format: String(localized: "leaderboard.badges_more_format"), entry.badges.count - 2))
                             .font(.caption2)
                             .foregroundColor(.secondary)
+                            .lineLimit(1)
                     }
                 }
+                .fixedSize(horizontal: true, vertical: false)
             }
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
         .background(isCurrentUser ? Color.blue.opacity(0.1) : Color.clear)
+    }
+
+    @ViewBuilder
+    private func statChip(icon: String, value: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+            Text(value)
+        }
+        .font(.caption)
+        .foregroundColor(color)
+        .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
     }
 }
 

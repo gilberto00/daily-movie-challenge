@@ -3,6 +3,7 @@
 "home.streak_format" = "Sequência: %d";
 "home.leaderboard" = "Ranking";
 "home.loading" = "Carregando desafio...";
+"home.loading_subtitle" = "Só um instante — seu filme do dia já vem.";
 "home.play" = "Jogar";
 "home.error_loading" = "Erro ao carregar desafio";
 "home.retry" = "Tentar novamente";

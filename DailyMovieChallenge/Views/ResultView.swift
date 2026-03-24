@@ -32,6 +32,7 @@ struct ResultView: View {
     @State private var isLoadingReminderSetting = false
     @State private var weeklyStatusDays: [WeeklyStatusDay] = []
     @State private var isLoadingWeeklyStatus = false
+    @State private var showCelebrationEffect = false
     
     // Computed property para verificar se todas as perguntas foram jogadas
     private var allQuestionsPlayed: Bool {
@@ -396,6 +397,12 @@ struct ResultView: View {
         .listStyle(.plain)
         .scrollIndicators(.visible)
         .scrollBounceBehavior(.always)
+        .overlay {
+            if result.isCorrect && showCelebrationEffect {
+                ConfettiStreamersOverlay(isActive: true)
+                    .allowsHitTesting(false)
+            }
+        }
         .simultaneousGesture(
             DragGesture(minimumDistance: 2)
                 .onChanged { value in
@@ -435,6 +442,7 @@ struct ResultView: View {
             }
             // Acerto: leve bounce (scale 1.0 -> 1.15 -> 1.0)
             if result.isCorrect {
+                showCelebrationEffect = true
                 try? await Task.sleep(nanoseconds: 200_000_000)
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
                     resultIconScale = 1.15
@@ -443,6 +451,8 @@ struct ResultView: View {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     resultIconScale = 1.0
                 }
+                try? await Task.sleep(nanoseconds: 900_000_000)
+                showCelebrationEffect = false
             } else {
                 // Erro: shake horizontal
                 withAnimation(.linear(duration: 0.35)) {

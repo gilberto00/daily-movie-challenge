@@ -3,6 +3,7 @@
 "home.streak_format" = "Streak: %d";
 "home.leaderboard" = "Leaderboard";
 "home.loading" = "Loading challenge...";
+"home.loading_subtitle" = "Hang tight — your daily movie is almost ready.";
 "home.play" = "Play";
 "home.error_loading" = "Error loading challenge";
 "home.retry" = "Retry";

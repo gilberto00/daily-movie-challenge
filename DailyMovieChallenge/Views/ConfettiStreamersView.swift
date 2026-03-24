@@ -87,8 +87,17 @@ private final class BurstHostView: UIView {
         pendingTriggerID = nil
         lastTriggerID = id
 
+        // No vídeo (segundo ~2), o efeito é um micro-burst único
+        // levemente à esquerda do tempo, sem sequência de fogos.
+        let origin = CGPoint(x: bounds.width * 0.37, y: bounds.height * 0.20)
+        let burst = makeEmitter(origin: origin, velocity: 92, birthRate: 24, scale: 0.17)
+        layer.addSublayer(burst)
+        stopAndRemove(burst, stopAfter: 0.05, removeAfter: 0.85)
+    }
+
+    private func makeEmitter(origin: CGPoint, velocity: CGFloat, birthRate: Float, scale: CGFloat) -> CAEmitterLayer {
         let emitter = CAEmitterLayer()
-        emitter.emitterPosition = CGPoint(x: bounds.midX, y: bounds.height * 0.22)
+        emitter.emitterPosition = origin
         emitter.emitterShape = .point
         emitter.emitterSize = CGSize(width: 1, height: 1)
         emitter.renderMode = .unordered
@@ -98,24 +107,30 @@ private final class BurstHostView: UIView {
             let cell = CAEmitterCell()
             cell.name = "p\(idx)"
             cell.contents = (idx % 2 == 0 ? makeDot(color: color) : makeRect(color: color)).cgImage
-            cell.birthRate = 46
-            cell.lifetime = 0.75
-            cell.lifetimeRange = 0.2
-            cell.velocity = 145
-            cell.velocityRange = 48
-            cell.yAcceleration = 210
+            cell.birthRate = birthRate
+            cell.lifetime = 0.48
+            cell.lifetimeRange = 0.12
+            cell.velocity = velocity
+            cell.velocityRange = 28
+            cell.yAcceleration = 145
             cell.emissionRange = .pi * 2
-            cell.scale = 0.28
-            cell.scaleRange = 0.1
-            cell.spin = 2.8
-            cell.spinRange = 1.2
-            cell.alphaSpeed = -1.5
+            cell.scale = scale
+            cell.scaleRange = 0.05
+            cell.spin = 2.1
+            cell.spinRange = 0.8
+            cell.alphaSpeed = -2.4
             return cell
         }
+        return emitter
+    }
 
-        layer.addSublayer(emitter)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.07) { emitter.birthRate = 0 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { emitter.removeFromSuperlayer() }
+    private func stopAndRemove(_ emitter: CAEmitterLayer, stopAfter: TimeInterval, removeAfter: TimeInterval) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + stopAfter) {
+            emitter.birthRate = 0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + removeAfter) {
+            emitter.removeFromSuperlayer()
+        }
     }
 
     private func makeDot(color: UIColor) -> UIImage {

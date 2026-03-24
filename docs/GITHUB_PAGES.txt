@@ -11,6 +11,10 @@ Your Support URL will be:
 
   https://gilberto00.github.io/daily-movie-challenge/
 
+Privacy Policy URL (App Store Connect → App Privacy):
+
+  https://gilberto00.github.io/daily-movie-challenge/privacy.html
+
 (Pages can take 1–2 minutes to go live after the first enable.)
 
 If `git push` failed with 403: push from a machine/account that has write

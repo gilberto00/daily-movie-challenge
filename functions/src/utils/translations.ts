@@ -66,6 +66,38 @@ export function translateGenre(genreEn: string, lang: Lang): string {
   return entry?.[lang] ?? genreEn;
 }
 
+/**
+ * Duração para UI (perguntas, curiosidades): horas + minutos quando >= 60 min.
+ */
+export function formatRuntimeMinutes(totalMinutes: number, lang: Lang): string {
+  const m = Math.round(totalMinutes);
+  if (!Number.isFinite(m) || m <= 0) {
+    if (lang === 'pt-BR') return 'Duração desconhecida';
+    if (lang === 'fr-CA') return 'Durée inconnue';
+    return 'Unknown runtime';
+  }
+
+  if (m < 60) {
+    if (lang === 'pt-BR') return `${m} minutos`;
+    if (lang === 'fr-CA') return `${m} minutes`;
+    return `${m} min`;
+  }
+
+  const h = Math.floor(m / 60);
+  const minRem = m % 60;
+
+  if (lang === 'pt-BR') {
+    if (minRem === 0) return `${h} h`;
+    return `${h} h ${minRem} min`;
+  }
+  if (lang === 'fr-CA') {
+    if (minRem === 0) return `${h} h`;
+    return `${h} h ${minRem} min`;
+  }
+  if (minRem === 0) return `${h}h`;
+  return `${h}h ${minRem}m`;
+}
+
 /** Curiosidades: array de funções (movie) => string por idioma */
 export function getCuriosityTemplates(lang: Lang): Array<(m: { title: string; release_date: string; vote_average: number; popularity: number; director?: string; runtime?: number; genres?: { name: string }[] }) => string | null> {
   const title = (m: { title: string }) => m.title;
@@ -82,7 +114,7 @@ export function getCuriosityTemplates(lang: Lang): Array<(m: { title: string; re
       (m) => `"${title(m)}" tem nota média de ${rating(m)}/10 no TMDB.`,
       (m) => `"${title(m)}" é um filme popular com pontuação de ${pop(m)} no TMDB.`,
       (m) => dir(m) ? `"${title(m)}" foi dirigido por ${dir(m)}.` : null,
-      (m) => run(m) ? `"${title(m)}" tem duração de ${run(m)} minutos.` : null,
+      (m) => run(m) ? `"${title(m)}" tem duração de ${formatRuntimeMinutes(run(m)!, 'pt-BR')}.` : null,
       (m) => genre(m) ? `"${title(m)}" é um filme de ${genre(m)}.` : null,
     ];
   }
@@ -92,7 +124,7 @@ export function getCuriosityTemplates(lang: Lang): Array<(m: { title: string; re
       (m) => `« ${title(m)} » a une note moyenne de ${rating(m)}/10 sur TMDB.`,
       (m) => `« ${title(m)} » est un film populaire avec une cote de ${pop(m)} sur TMDB.`,
       (m) => dir(m) ? `« ${title(m)} » a été réalisé par ${dir(m)}.` : null,
-      (m) => run(m) ? `« ${title(m)} » a une durée de ${run(m)} minutes.` : null,
+      (m) => run(m) ? `« ${title(m)} » a une durée de ${formatRuntimeMinutes(run(m)!, 'fr-CA')}.` : null,
       (m) => genre(m) ? `« ${title(m)} » est un film ${genre(m)}.` : null,
     ];
   }
@@ -102,7 +134,7 @@ export function getCuriosityTemplates(lang: Lang): Array<(m: { title: string; re
     (m) => `"${title(m)}" has an average rating of ${rating(m)}/10 on TMDB.`,
     (m) => `"${title(m)}" is a popular film with a score of ${pop(m)} on TMDB.`,
     (m) => dir(m) ? `"${title(m)}" was directed by ${dir(m)}.` : null,
-    (m) => run(m) ? `"${title(m)}" has a runtime of ${run(m)} minutes.` : null,
+    (m) => run(m) ? `"${title(m)}" has a runtime of ${formatRuntimeMinutes(run(m)!, 'en')}.` : null,
     (m) => genre(m) ? `"${title(m)}" is a ${genre(m)} film.` : null,
   ];
 }

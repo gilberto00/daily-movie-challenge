@@ -1,5 +1,12 @@
 import { TMDBMovie } from './tmdb';
-import { type Lang, getQuestionTemplate, getUnknownDirector, translateGenre, getCuriosityTemplates } from './translations';
+import {
+  type Lang,
+  formatRuntimeMinutes,
+  getCuriosityTemplates,
+  getQuestionTemplate,
+  getUnknownDirector,
+  translateGenre,
+} from './translations';
 
 export interface Question {
   question: string;
@@ -161,19 +168,19 @@ export function generateGenreQuestion(movie: TMDBMovie, lang?: Lang): Question {
  * Gera pergunta sobre a duração (runtime) do filme
  */
 export function generateRuntimeQuestion(movie: TMDBMovie, lang?: Lang): Question {
+  const l = defaultLang(lang);
   const runtime = movie.runtime || 120;
-  const correctAnswer = `${runtime} min`;
+  const correctAnswer = formatRuntimeMinutes(runtime, l);
 
   const options = new Set<string>([correctAnswer]);
   while (options.size < 4) {
     const offset = Math.floor(Math.random() * 60 - 30);
     const wrongRuntime = runtime + offset;
     if (wrongRuntime > 60 && wrongRuntime < 240) {
-      options.add(`${wrongRuntime} min`);
+      options.add(formatRuntimeMinutes(wrongRuntime, l));
     }
   }
 
-  const l = defaultLang(lang);
   return {
     question: getQuestionTemplate('runtime', l, movie.title),
     options: Array.from(options).sort(() => Math.random() - 0.5),

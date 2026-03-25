@@ -29,6 +29,12 @@ function isUnknownAnswer(value: unknown): boolean {
   return unknowns.has(v);
 }
 
+/** Desafios antigos gravaram duração só como "120 min"; regeneramos para h/min após deploy. */
+function isLegacyRuntimeFormat(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  return /^\d+\s*min$/i.test(value.trim());
+}
+
 /**
  * Retorna o desafio do dia (ou gera se não existir)
  * GET /getDailyChallenge?date=YYYY-MM-DD&lang=pt-BR (lang opcional; usa idioma do sistema no app)
@@ -66,6 +72,28 @@ export const getDailyChallenge = functions
           const movie = await fetchMovieDetails(data.movieId);
           if (movie) {
             const fixed = generateQuestionByType('director', movie, 'en');
+            const fixedCuriosity = generateCuriosity(movie, 'en');
+            const patch = {
+              question: fixed.question,
+              options: fixed.options,
+              correctAnswer: fixed.correctAnswer,
+              questionType: fixed.questionType,
+              curiosity: fixedCuriosity,
+              healedAt: admin.firestore.FieldValue.serverTimestamp(),
+            };
+            await challengeRef.set(patch, { merge: true });
+            data = { ...data, ...patch };
+          }
+        }
+
+        const looksLegacyRuntime =
+          data.questionType === 'runtime' &&
+          (isLegacyRuntimeFormat(data.correctAnswer) ||
+            (Array.isArray(data.options) && data.options.some((o: unknown) => isLegacyRuntimeFormat(o))));
+        if (looksLegacyRuntime) {
+          const movie = await fetchMovieDetails(data.movieId);
+          if (movie) {
+            const fixed = generateQuestionByType('runtime', movie, 'en');
             const fixedCuriosity = generateCuriosity(movie, 'en');
             const patch = {
               question: fixed.question,

@@ -56,6 +56,7 @@
 /* Trivia */
 "trivia.submit" = "Envoyer";
 "trivia.challenge" = "Défi";
+"trivia.time_remaining_format" = "%lld s restantes";
 
 /* Leaderboard */
 "leaderboard.title" = "Classement";
